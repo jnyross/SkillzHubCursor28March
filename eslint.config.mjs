@@ -1,3 +1,5 @@
+import tseslint from "@typescript-eslint/eslint-plugin";
+import tsParser from "@typescript-eslint/parser";
 import { defineConfig, globalIgnores } from "eslint/config";
 
 export default defineConfig([
@@ -13,6 +15,10 @@ export default defineConfig([
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module",
+      parser: tsParser,
+    },
+    plugins: {
+      "@typescript-eslint": tseslint,
     },
     rules: {
       "no-console": "off",

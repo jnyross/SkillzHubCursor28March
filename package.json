@@ -24,7 +24,10 @@
     "claude:preflight": "node -e \"import('@skill-builder/shared').then(async (m) => { const result = await m.runClaudePreflight(); console.log(JSON.stringify(result, null, 2)); process.exit(result.status === 'ok' ? 0 : 1); });\""
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
     "@types/node": "^20.19.17",
+    "@typescript-eslint/eslint-plugin": "^8.57.2",
+    "@typescript-eslint/parser": "^8.57.2",
     "eslint": "^9.39.1",
     "prettier": "^3.6.2",
     "turbo": "^2.5.8",
