@@ -57,6 +57,15 @@ export function serverError(error: unknown) {
   return jsonError("INTERNAL_ERROR", "Unexpected server error.", 500);
 }
 
+export async function parseJsonBody(
+  request: Request,
+): Promise<{ success: true; data: unknown } | { success: false; response: NextResponse }>;
+
+export async function parseJsonBody<T>(
+  request: Request,
+  schema: ZodType<T>,
+): Promise<{ success: true; data: T } | { success: false; response: NextResponse }>;
+
 export async function parseJsonBody<T>(
   request: Request,
   schema?: ZodType<T>,

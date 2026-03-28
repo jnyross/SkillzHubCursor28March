@@ -3,7 +3,13 @@ import { NextResponse } from "next/server";
 import { db, getProjectById, updateProject } from "@skill-builder/db";
 import { projectBriefSchema, projectRecordSchema } from "@skill-builder/shared";
 
-import { notFound, parseJsonBody, unauthorized, serverError } from "../../../../../lib/api";
+import {
+  notFound,
+  parseJsonBody,
+  unauthorized,
+  serverError,
+  unwrapParsedBody,
+} from "../../../../../lib/api";
 import { getCurrentSession } from "../../../../../lib/session";
 
 interface DiscoveryRouteContext {
@@ -19,7 +25,7 @@ export async function PATCH(request: Request, context: DiscoveryRouteContext) {
   }
 
   const briefResult = await parseJsonBody(request, projectBriefSchema);
-  if (!briefResult.success) {
+  if (!unwrapParsedBody(briefResult)) {
     return briefResult.response;
   }
 

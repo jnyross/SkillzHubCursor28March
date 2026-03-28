@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { createProjectInputSchema, projectRecordSchema } from "@skill-builder/shared";
 import { createProject, db, getLatestProject, listProjects } from "@skill-builder/db";
 
-import { parseJsonBody, unauthorized } from "../../../lib/api";
+import { parseJsonBody, unauthorized, unwrapParsedBody } from "../../../lib/api";
 import { getSessionFromCookies } from "../../../lib/session";
 
 export async function GET() {
@@ -31,17 +31,15 @@ export async function POST(request: Request) {
   }
 
   const parsed = await parseJsonBody(request, createProjectInputSchema);
-  if (!parsed.success) {
+  if (!unwrapParsedBody(parsed)) {
     return parsed.response;
   }
 
-  const input = parsed.data as import("@skill-builder/shared").CreateProjectInput;
-
   const project = await createProject(db, {
-    name: input.name,
-    slug: input.slug,
+    name: parsed.data.name,
+    slug: parsed.data.slug,
     ownerUserId: session.user,
-    briefJson: input.brief ?? null,
+    briefJson: parsed.data.brief ?? null,
   });
 
   return NextResponse.json(

@@ -16,14 +16,16 @@ export async function POST(request: Request) {
     return parsed.response;
   }
 
-  if (!(await verifyPassword(parsed.data.password))) {
+  const input = parsed.data;
+
+  if (!(await verifyPassword(input.password))) {
     return unauthorized("INVALID_CREDENTIALS");
   }
 
   const response = NextResponse.json({
     ok: true,
     user: sharedEnv.APP_LOCAL_USER ?? "local-admin",
-    redirectTo: parsed.data.redirectTo ?? "/projects",
+    redirectTo: input.redirectTo ?? "/projects",
   });
 
   response.cookies.set(createSessionCookie());

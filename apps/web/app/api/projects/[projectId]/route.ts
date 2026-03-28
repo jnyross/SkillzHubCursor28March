@@ -37,14 +37,18 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
 
   const parsed = await parseJsonBody(request, updateProjectInputSchema);
-  if (!parsed.ok) {
+  if (!parsed.success) {
     return parsed.response;
   }
 
   const { projectId } = await context.params;
 
   try {
-    const project = await updateProject(db, projectId, parsed.data);
+    const project = await updateProject(
+      db,
+      projectId,
+      parsed.data as import("@skill-builder/shared").UpdateProjectInput,
+    );
 
     return NextResponse.json({
       ok: true,
