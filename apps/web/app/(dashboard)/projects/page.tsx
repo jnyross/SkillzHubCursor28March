@@ -1,13 +1,39 @@
 import Link from "next/link";
+import { db } from "@skill-builder/db";
+import { getLatestProject } from "@skill-builder/db";
 
-export default function ProjectsPage() {
+export default async function ProjectsPage() {
+  const latestProject = await getLatestProject(db);
   return (
     <main style={{ display: "grid", gap: "1rem" }}>
       <h1 style={{ margin: 0, fontSize: "2rem" }}>Projects</h1>
       <p style={{ margin: 0, color: "#94a3b8", lineHeight: 1.7 }}>
-        Phase 2 adds the authenticated dashboard shell. Project CRUD routes are
-        the next step in execution.
+        Authenticated dashboard shell with local project APIs wired to the host
+        Postgres database.
       </p>
+      <section
+        style={{
+          display: "grid",
+          gap: "0.5rem",
+          padding: "1rem",
+          borderRadius: "1rem",
+          border: "1px solid rgba(148,163,184,0.18)",
+          background: "rgba(15,23,42,0.72)",
+        }}
+      >
+        <h2 style={{ margin: 0, fontSize: "1.125rem" }}>Latest project</h2>
+        {latestProject ? (
+          <>
+            <strong>{latestProject.name}</strong>
+            <span style={{ color: "#94a3b8" }}>/{latestProject.slug}</span>
+            <span style={{ color: "#cbd5e1" }}>Status: {latestProject.status}</span>
+          </>
+        ) : (
+          <span style={{ color: "#94a3b8" }}>
+            No projects created yet. Use the API to create your first project.
+          </span>
+        )}
+      </section>
       <Link
         href="/"
         style={{

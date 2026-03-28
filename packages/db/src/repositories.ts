@@ -1,4 +1,4 @@
-import { and, desc, eq, type InferSelectModel } from "drizzle-orm";
+import { and, desc, eq, sql, type InferSelectModel } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 
@@ -215,6 +215,161 @@ export async function getProjectBySlug(
 ): Promise<ProjectRecord | null> {
   const [project] = await db.select().from(projects).where(eq(projects.slug, slug)).limit(1);
   return project ?? null;
+}
+
+export async function getProjectById(
+  db: Database,
+  projectId: string,
+): Promise<ProjectRecord | null> {
+  const [project] = await db.select().from(projects).where(eq(projects.id, projectId)).limit(1);
+  return project ?? null;
+}
+
+export async function listProjects(db: Database): Promise<ProjectRecord[]> {
+  return db.select().from(projects).orderBy(desc(projects.createdAt));
+}
+
+export async function updateProject(
+  db: Database,
+  projectId: string,
+  input: {
+    name?: string;
+    slug?: string;
+    briefJson?: Record<string, unknown> | null;
+    briefApprovedAt?: Date | null;
+  },
+): Promise<ProjectRecord> {
+  const [project] = await db
+    .update(projects)
+    .set({
+      ...input,
+      updatedAt: new Date(),
+    })
+    .where(eq(projects.id, projectId))
+    .returning();
+
+  if (!project) {
+    throw new DomainError(`Project ${projectId} does not exist.`, "PROJECT_NOT_FOUND");
+  }
+
+  return project;
+}
+
+export async function getProjectById(
+  db: Database,
+  projectId: string,
+): Promise<ProjectRecord | null> {
+  const [project] = await db
+    .select()
+    .from(projects)
+    .where(eq(projects.id, projectId))
+    .limit(1);
+
+  return project ?? null;
+}
+
+export async function updateProject(
+  db: Database,
+  projectId: string,
+  input: Partial<Pick<ProjectRecord, "name" | "slug" | "briefJson">>,
+): Promise<ProjectRecord> {
+  const [updated] = await db
+    .update(projects)
+    .set({
+      ...input,
+      updatedAt: new Date(),
+    })
+    .where(eq(projects.id, projectId))
+    .returning();
+
+  if (!updated) {
+    throw new DomainError(`Project ${projectId} does not exist.`, "PROJECT_NOT_FOUND");
+  }
+
+  return updated;
+}
+
+export async function approveProjectBrief(
+  db: Database,
+  projectId: string,
+): Promise<ProjectRecord> {
+  const [updated] = await db
+    .update(projects)
+    .set({
+      briefApprovedAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .where(eq(projects.id, projectId))
+    .returning();
+
+  if (!updated) {
+    throw new DomainError(`Project ${projectId} does not exist.`, "PROJECT_NOT_FOUND");
+  }
+
+  return updated;
+}
+
+export async function createAuditEvent(
+  db: Database,
+  input: {
+    entityType: string;
+    entityId: string;
+    eventType: string;
+    actorUserId: string;
+    payloadJson?: Record<string, unknown>;
+  },
+) {
+  await db.execute(sql`
+    INSERT INTO audit_events (id, entity_type, entity_id, event_type, actor_user_id, payload_json)
+    VALUES (
+      ${randomUUID()},
+      ${input.entityType},
+      ${input.entityId},
+      ${input.eventType},
+      ${input.actorUserId},
+      ${JSON.stringify(input.payloadJson ?? {})}::jsonb
+    )
+  `);
+}
+
+export async function getProjectById(
+  db: Database,
+  projectId: string,
+): Promise<ProjectRecord | null> {
+  const [project] = await db
+    .select()
+    .from(projects)
+    .where(eq(projects.id, projectId))
+    .limit(1);
+
+  return project ?? null;
+}
+
+export async function updateProject(
+  db: Database,
+  projectId: string,
+  input: {
+    name?: string;
+    slug?: string;
+    briefJson?: Record<string, unknown> | null;
+    briefApprovedAt?: Date | null;
+    status?: ProjectRecord["status"];
+  },
+): Promise<ProjectRecord> {
+  const [updated] = await db
+    .update(projects)
+    .set({
+      ...input,
+      updatedAt: new Date(),
+    })
+    .where(eq(projects.id, projectId))
+    .returning();
+
+  if (!updated) {
+    throw new DomainError(`Project ${projectId} does not exist.`, "PROJECT_NOT_FOUND");
+  }
+
+  return updated;
 }
 
 export async function ensureProjectExists(
