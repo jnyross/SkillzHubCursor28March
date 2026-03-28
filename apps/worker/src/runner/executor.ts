@@ -1,18 +1,21 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 
+import type { WorkerRuntimeEnv } from "../config";
 import { enumerateArtifacts } from "../artifacts/enumerate";
 import { runClaudeCodeCommand } from "./claude-code";
 import { parseClaudeResult } from "./result-parser";
 import { cleanupRunWorkdir, createRunWorkdir } from "./workdir";
 import type {
   RunnerExecutionInput,
-  RunnerExecutionOutput,
   RunnerOutputFile,
-  WorkerRuntimeConfig,
+  RunnerExecutionOutput,
 } from "./types";
 
-async function writeInputFiles(baseDir: string, files: RunnerExecutionInput["inputFiles"]) {
+async function writeInputFiles(
+  baseDir: string,
+  files: RunnerExecutionInput["inputFiles"] = [],
+) {
   for (const file of files) {
     const targetPath = join(baseDir, file.path);
     await mkdir(dirname(targetPath), { recursive: true });
@@ -22,10 +25,10 @@ async function writeInputFiles(baseDir: string, files: RunnerExecutionInput["inp
 
 async function writeSkillFiles(
   baseDir: string,
-  skillName: string,
-  files: RunnerExecutionInput["skillFiles"],
+  skillName: string | undefined,
+  files: RunnerExecutionInput["skillFiles"] = [],
 ) {
-  if (!files.length) {
+  if (!skillName || !files.length) {
     return;
   }
 
@@ -39,16 +42,16 @@ async function writeSkillFiles(
 }
 
 function buildClaudeCommandArgs(
-  config: WorkerRuntimeConfig,
+  env: WorkerRuntimeEnv,
   input: RunnerExecutionInput,
   cwd: string,
 ) {
-  const model = input.model ?? config.claude.model;
+  const model = input.model ?? env.CLAUDE_CODE_MODEL;
 
   return {
-    binaryPath: config.claude.binaryPath,
+    binaryPath: env.CLAUDE_CODE_BIN,
     cwd,
-    timeoutMs: input.timeoutMs ?? config.claude.timeoutMs,
+    timeoutMs: input.timeoutMs ?? env.CLAUDE_CODE_TIMEOUT_MS,
     args: [
       "--bare",
       "--print",
@@ -60,11 +63,11 @@ function buildClaudeCommandArgs(
       "--model",
       model,
       "--max-turns",
-      String(input.maxTurns ?? config.claude.maxTurns),
+      String(input.maxTurns ?? env.CLAUDE_CODE_MAX_TURNS),
       "--max-budget-usd",
-      String(input.maxBudgetUsd ?? config.claude.maxBudgetUsd),
+      String(input.maxBudgetUsd ?? env.CLAUDE_CODE_MAX_BUDGET_USD),
       "--allowedTools",
-      ...config.claude.allowedTools,
+      ...env.CLAUDE_CODE_ALLOWED_TOOLS,
       "-p",
       input.prompt,
     ],
@@ -83,17 +86,19 @@ function convertArtifacts(
 }
 
 export async function executeRunner(
-  config: WorkerRuntimeConfig,
+  env: WorkerRuntimeEnv,
+  keepWorkdirs: boolean,
+  tmpRoot: string,
   input: RunnerExecutionInput,
 ): Promise<RunnerExecutionOutput> {
-  const workdir = await createRunWorkdir(config.tmpRoot);
+  const workdir = await createRunWorkdir(tmpRoot);
   const transcriptPath = join(workdir.path, "claude-output.json");
 
   try {
     await writeInputFiles(workdir.path, input.inputFiles);
     await writeSkillFiles(workdir.path, input.skillName, input.skillFiles);
 
-    const command = buildClaudeCommandArgs(config, input, workdir.path);
+    const command = buildClaudeCommandArgs(env, input, workdir.path);
     const commandResult = await runClaudeCodeCommand(command);
     await writeFile(transcriptPath, commandResult.stdout, "utf8");
     const parsed = parseClaudeResult(commandResult.stdout);
@@ -103,7 +108,7 @@ export async function executeRunner(
         status: "failed",
         provider: "claude-code",
         modelId: parsed.modelId,
-        totalTokens: parsed.totalTurns,
+        totalTokens: null,
         durationMs: parsed.durationMs ?? commandResult.durationMs,
         totalCostUsd: parsed.totalCostUsd,
         transcriptUri: `file://${transcriptPath}`,
@@ -120,8 +125,8 @@ export async function executeRunner(
     return {
       status: "succeeded",
       provider: "claude-code",
-      modelId: parsed.modelId ?? model,
-      totalTokens: parsed.totalTurns,
+      modelId: parsed.modelId ?? (input.model ?? env.CLAUDE_CODE_MODEL),
+      totalTokens: null,
       durationMs: parsed.durationMs ?? commandResult.durationMs,
       totalCostUsd: parsed.totalCostUsd,
       transcriptUri: `file://${transcriptPath}`,
@@ -131,7 +136,7 @@ export async function executeRunner(
       failureReason: null,
     };
   } finally {
-    if (!config.keepWorkdirs) {
+    if (!keepWorkdirs) {
       await cleanupRunWorkdir(workdir.path);
     }
   }

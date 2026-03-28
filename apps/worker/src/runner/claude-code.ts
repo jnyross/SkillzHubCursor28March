@@ -22,7 +22,9 @@ export async function runClaudeCodeCommand(
 
     const timer = setTimeout(() => {
       child.kill("SIGTERM");
-      setTimeout(() => child.kill("SIGKILL"), 30_000).unref();
+      setTimeout(() => {
+        child.kill("SIGKILL");
+      }, 30_000).unref();
     }, input.timeoutMs);
 
     child.stdout.on("data", (chunk) => {

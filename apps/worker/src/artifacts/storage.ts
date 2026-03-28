@@ -3,9 +3,9 @@ import { readFile } from "node:fs/promises";
 import { PutObjectCommand, S3Client, type S3ClientConfig } from "@aws-sdk/client-s3";
 
 import type { EnumeratedArtifact } from "./enumerate";
-import type { WorkerRuntimeConfig } from "../config";
+import type { WorkerConfig } from "../config";
 
-function createS3Client(config: WorkerRuntimeConfig) {
+function createS3Client(config: WorkerConfig) {
   const s3Config: S3ClientConfig = {
     region: config.s3.region,
     endpoint: config.s3.endpoint,
@@ -20,7 +20,7 @@ function createS3Client(config: WorkerRuntimeConfig) {
 }
 
 export async function uploadArtifact(
-  config: WorkerRuntimeConfig,
+  config: WorkerConfig,
   key: string,
   body: Buffer | string,
   contentType = "application/octet-stream",
@@ -40,7 +40,7 @@ export async function uploadArtifact(
 }
 
 export async function uploadArtifactFiles(
-  config: WorkerRuntimeConfig,
+  config: WorkerConfig,
   prefix: string,
   files: EnumeratedArtifact[],
 ) {

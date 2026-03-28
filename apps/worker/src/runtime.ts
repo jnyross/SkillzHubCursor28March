@@ -1,10 +1,10 @@
 import { createServer, type Server } from "node:http";
-import type PgBoss from "pg-boss";
+import PgBoss from "pg-boss";
 
 import { pool } from "@skill-builder/db";
 
 import { createBoss } from "./boss";
-import { readWorkerConfig, type WorkerConfig } from "./config";
+import { getWorkerConfig, type WorkerConfig } from "./config";
 import { workerLogger } from "./logger";
 
 export type WorkerRuntime = {
@@ -14,7 +14,7 @@ export type WorkerRuntime = {
 };
 
 export async function startWorkerRuntime(): Promise<WorkerRuntime> {
-  const config = readWorkerConfig();
+  const config = getWorkerConfig();
   const logger = workerLogger.child({
     component: "runtime",
     port: config.port,
@@ -53,7 +53,7 @@ export async function startWorkerRuntime(): Promise<WorkerRuntime> {
       event: "worker.started",
       bossSchema: config.queue.schema,
       dbHost: new URL(config.databaseUrl).host,
-      s3Endpoint: config.runtimeEnv.S3_ENDPOINT,
+      s3Endpoint: config.s3.endpoint,
     },
     "Worker runtime started",
   );

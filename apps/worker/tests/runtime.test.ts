@@ -3,8 +3,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const queueNames = vi.hoisted(() => ({
   start: vi.fn(),
   stop: vi.fn(),
-  send: vi.fn(),
-  work: vi.fn(),
   createQueue: vi.fn(),
 }));
 
@@ -41,8 +39,8 @@ describe("worker runtime scaffolding", () => {
 
     expect(config.port).toBe(3001);
     expect(config.queue.name).toBe("iteration.launch");
-    expect(config.runtimeEnv.S3_BUCKET).toBe("skill-builder-artifacts");
-    expect(config.runtimeEnv.CLAUDE_CODE_MODEL).toBe("claude-sonnet-4-5");
+    expect(config.runtimeEnv.s3Bucket).toBe("skill-builder-artifacts");
+    expect(config.runtimeEnv.claudeModel).toBe("claude-sonnet-4-5");
   });
 
   it("creates a workdir in the configured temp root", async () => {

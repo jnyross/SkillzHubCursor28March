@@ -13,3 +13,11 @@ export async function sha256File(path: string) {
     stream.on("end", () => resolve(hash.digest("hex")));
   });
 }
+
+export async function sha256Buffer(
+  value: Buffer | string,
+): Promise<string> {
+  const hash = createHash("sha256");
+  hash.update(value);
+  return hash.digest("hex");
+}

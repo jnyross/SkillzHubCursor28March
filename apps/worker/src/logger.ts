@@ -1,5 +1,10 @@
-import { logger } from "@skill-builder/shared";
+import pino from "pino";
 
-export const workerLogger = logger.child({
+import { getWorkerConfig } from "./config";
+
+const config = getWorkerConfig();
+
+export const workerLogger = pino({
   service: "worker",
+  level: config.logLevel,
 });

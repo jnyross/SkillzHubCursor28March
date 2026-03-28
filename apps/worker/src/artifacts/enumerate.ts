@@ -1,11 +1,13 @@
 import { readdir, stat } from "node:fs/promises";
 import { join, relative } from "node:path";
 
+import { sha256File } from "./checksum";
+
 export type EnumeratedArtifact = {
   absolutePath: string;
   relativePath: string;
   sizeBytes: number;
-  sha256?: string;
+  sha256: string;
 };
 
 async function walkDirectory(root: string, current: string): Promise<EnumeratedArtifact[]> {
@@ -25,10 +27,12 @@ async function walkDirectory(root: string, current: string): Promise<EnumeratedA
     }
 
     const fileStat = await stat(absolutePath);
+    const sha256 = await sha256File(absolutePath);
     files.push({
       absolutePath,
       relativePath: relative(root, absolutePath),
       sizeBytes: fileStat.size,
+      sha256,
     });
   }
 

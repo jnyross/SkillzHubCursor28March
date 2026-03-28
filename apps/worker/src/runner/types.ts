@@ -31,27 +31,47 @@ export type RunnerExecutionInput = {
   iterationId: string;
   runId: string;
   model?: string;
-  skillName?: string;
-  skillMarkdown?: string;
-  inputFiles?: RunnerInputFile[];
-  keepWorkspace?: boolean;
+  skillName: string;
+  skillFiles: RunnerInputFile[];
+  inputFiles: RunnerInputFile[];
+  allowedTools?: string[];
+  maxTurns?: number;
+  maxBudgetUsd?: number;
+  timeoutMs?: number;
 };
 
 export type RunnerOutputFile = {
   path: string;
-  absolutePath: string;
   sha256: string;
   sizeBytes: number;
 };
 
-export type RunnerExecutionResult = {
-  outputText: string;
-  sessionId: string | null;
-  costUsd: number | null;
-  durationMs: number | null;
-  turns: number | null;
-  model: string | null;
-  rawStdout: string;
-  outputFiles: RunnerOutputFile[];
-  workdir: string;
-};
+export type RunnerExecutionOutput =
+  | {
+      status: "succeeded";
+      provider: "claude-code";
+      modelId: string | null;
+      totalTokens: number | null;
+      durationMs: number | null;
+      totalCostUsd: number | null;
+      transcriptUri: string | null;
+      outputFiles: RunnerOutputFile[];
+      rawStdout: string;
+      rawStderr: string;
+      failureReason: null;
+      workspacePath: string;
+    }
+  | {
+      status: "failed";
+      provider: "claude-code";
+      modelId: string | null;
+      totalTokens: number | null;
+      durationMs: number | null;
+      totalCostUsd: number | null;
+      transcriptUri: string | null;
+      outputFiles: RunnerOutputFile[];
+      rawStdout: string;
+      rawStderr: string;
+      failureReason: string;
+      workspacePath: string | null;
+    };
