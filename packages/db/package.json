@@ -11,13 +11,25 @@
   "scripts": {
     "dev": "echo \"db package ready\"",
     "build": "tsc -p tsconfig.json --noEmit",
-    "lint": "echo \"db lint placeholder\"",
+    "lint": "pnpm exec eslint src tests --ext .ts",
+    "db:generate": "pnpm exec drizzle-kit generate",
+    "db:migrate": "pnpm exec drizzle-kit migrate",
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
+  "dependencies": {
+    "@skill-builder/shared": "workspace:*"
+  },
   "devDependencies": {
+    "@t3-oss/env-core": "^0.13.11",
     "@types/node": "^20",
+    "drizzle-kit": "^0.31.10",
+    "drizzle-orm": "^0.45.2",
+    "eslint": "^9",
+    "pg": "^8.20.0",
+    "pino": "^10.3.1",
     "typescript": "^5.9.3",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "zod": "^4.3.6"
   }
 }
