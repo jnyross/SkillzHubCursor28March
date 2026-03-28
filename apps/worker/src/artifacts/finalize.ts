@@ -18,7 +18,7 @@ export async function finalizeRunArtifacts(
     config,
     prefix,
     result.outputFiles.map((file) => ({
-      absolutePath: file.path,
+      absolutePath: file.absolutePath,
       relativePath: file.path,
       sha256: file.sha256,
       sizeBytes: file.sizeBytes,

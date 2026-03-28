@@ -17,7 +17,7 @@ export function createBoss(config: WorkerConfig) {
     connectionString: config.databaseUrl,
     schema: config.queue.schema,
     monitorIntervalSeconds: 0,
-  });
+  } as ConstructorParameters<typeof PgBoss>[0]);
 }
 
 export async function startBoss(boss: PgBoss) {
