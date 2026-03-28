@@ -42,6 +42,7 @@ export type RunnerExecutionInput = {
 
 export type RunnerOutputFile = {
   path: string;
+  absolutePath: string;
   sha256: string;
   sizeBytes: number;
 };
