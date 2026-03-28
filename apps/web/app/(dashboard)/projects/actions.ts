@@ -10,30 +10,44 @@ type ActionState = {
 };
 
 function getCookieHeader(cookie: string | null) {
-  return cookie ? { cookie } : {};
+  const headers = new Headers({
+    "content-type": "application/json",
+  });
+
+  if (cookie) {
+    headers.set("cookie", cookie);
+  }
+
+  return headers;
 }
 
+export type CreateProjectActionResult =
+  | {
+      ok: false;
+      error: string;
+    }
+  | {
+      ok: true;
+      projectId: string;
+    };
+
 export async function createProjectAction(
-  cookie: string | null,
-  _prevState: ActionState,
   formData: FormData,
-): Promise<ActionState> {
+): Promise<CreateProjectActionResult> {
   const name = String(formData.get("name") ?? "").trim();
   const slug = String(formData.get("slug") ?? "").trim();
+  const cookie = String(formData.get("sessionCookie") ?? "").trim() || null;
 
   if (!name || !slug) {
     return {
+      ok: false,
       error: "Name and slug are required.",
-      success: null,
     };
   }
 
   const response = await fetch(`${baseUrl}/api/projects`, {
     method: "POST",
-    headers: {
-      "content-type": "application/json",
-      ...getCookieHeader(cookie),
-    },
+    headers: getCookieHeader(cookie),
     body: JSON.stringify({ name, slug }),
     cache: "no-store",
   });
@@ -44,16 +58,16 @@ export async function createProjectAction(
 
   if (!response.ok) {
     return {
+      ok: false,
       error: payload?.error ?? "Unable to create project.",
-      success: null,
     };
   }
 
   revalidatePath("/projects");
 
   return {
-    error: null,
-    success: "Project created successfully.",
+    ok: true,
+    projectId: payload?.project?.id ?? "",
   };
 }
 
@@ -83,10 +97,7 @@ export async function updateDiscoveryBriefAction(
 
   const response = await fetch(`${baseUrl}/api/projects/${projectId}/discovery`, {
     method: "PATCH",
-    headers: {
-      "content-type": "application/json",
-      ...getCookieHeader(cookie),
-    },
+    headers: getCookieHeader(cookie),
     body: JSON.stringify(payload),
     cache: "no-store",
   });
@@ -115,10 +126,7 @@ export async function approveDiscoveryBriefAction(
 ): Promise<void> {
   await fetch(`${baseUrl}/api/projects/${projectId}/discovery/approve`, {
     method: "POST",
-    headers: {
-      "content-type": "application/json",
-      ...getCookieHeader(cookie),
-    },
+    headers: getCookieHeader(cookie),
     body: JSON.stringify({}),
     cache: "no-store",
   });

@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 
 import { createProjectAction } from "../actions";
 
@@ -6,10 +7,12 @@ export default function NewProjectPage() {
   async function submit(formData: FormData) {
     "use server";
 
-    const result = await createProjectAction(formData);
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore.toString();
+    const result = await createProjectAction(cookieHeader || null, formData);
 
-    if (result.ok) {
-      redirect(`/projects/${result.project.id}`);
+    if (!result.error) {
+      redirect("/projects");
     }
   }
 
