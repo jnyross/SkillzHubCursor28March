@@ -172,12 +172,10 @@ describe("project api routes", () => {
         method: "PATCH",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          brief: {
-            sourceRequest: "Create a skill builder",
-            problemStatement: "Automate skill iteration",
-            targetUser: "internal users",
-            outputExpectations: ["paired results"],
-          },
+          sourceRequest: "Create a skill builder",
+          problemStatement: "Automate skill iteration",
+          targetUser: "internal users",
+          outputExpectations: ["paired results"],
         }),
       }),
       {
