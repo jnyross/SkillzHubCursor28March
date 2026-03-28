@@ -17,7 +17,6 @@ export function createBoss(config: WorkerConfig) {
     connectionString: config.databaseUrl,
     schema: config.queue.schema,
     monitorIntervalSeconds: 0,
-    newJobCheckIntervalSeconds: config.queue.newJobCheckIntervalSeconds,
   });
 }
 
