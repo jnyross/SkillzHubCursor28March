@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 
+import { getWorkerConfig } from "../src/config";
+
 describe("worker scaffold", () => {
-  it("provides a placeholder test so workspace validation passes", () => {
-    expect(true).toBe(true);
+  it("loads worker config defaults", () => {
+    const config = getWorkerConfig();
+
+    expect(config.port).toBeGreaterThan(0);
+    expect(config.claudeBinary).toBeTruthy();
+    expect(config.s3Bucket).toBeTruthy();
   });
 });
