@@ -4,16 +4,13 @@ import { cookies } from "next/headers";
 import { createProjectAction } from "../actions";
 
 export default function NewProjectPage() {
-  async function submit(_state: unknown, formData: FormData) {
+  async function submit(formData: FormData) {
     "use server";
 
     const cookieStore = await cookies();
     const cookieHeader = cookieStore.toString();
-    const result = await createProjectAction(
-      cookieHeader || null,
-      { error: null, success: null },
-      formData,
-    );
+    formData.set("sessionCookie", cookieHeader);
+    const result = await createProjectAction(formData);
 
     if (result.ok) {
       redirect("/projects");
