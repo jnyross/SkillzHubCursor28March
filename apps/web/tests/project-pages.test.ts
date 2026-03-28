@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import React from "react";
 
 const listProjects = vi.fn();
 const getProjectById = vi.fn();
