@@ -5,10 +5,8 @@ import { projectBriefSchema, projectRecordSchema } from "@skill-builder/shared";
 
 import {
   notFound,
-  parseJsonBody,
   unauthorized,
   serverError,
-  unwrapParsedBody,
 } from "../../../../../lib/api";
 import { getCurrentSession } from "../../../../../lib/session";
 interface DiscoveryRouteContext {
@@ -27,7 +25,14 @@ export async function PATCH(request: Request, context: DiscoveryRouteContext) {
   const parsed = projectBriefSchema.safeParse(body);
 
   if (!parsed.success) {
-    return serverError(parsed.error);
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "INVALID_PROJECT_BRIEF",
+        details: parsed.error.flatten(),
+      },
+      { status: 400 },
+    );
   }
 
   const { projectId } = await context.params;
