@@ -40,7 +40,7 @@ packages/
 3. Start local infrastructure:
 
    ```bash
-   pnpm db:up
+   pnpm infra:up:host
    ```
 
 4. Start the web app:
@@ -104,6 +104,33 @@ Expected result:
 - MinIO console on `127.0.0.1:9001`
 - automatic creation of the `skill-builder-artifacts` bucket
 
+### Host fallback for restricted VMs
+
+If Docker is unavailable in your environment, the repo also supports a host-mode fallback:
+
+```bash
+pnpm infra:up:host
+```
+
+That script will:
+
+- start the local PostgreSQL 16 cluster
+- create/update the `skill_builder` database user and database
+- start MinIO on `127.0.0.1:9000`
+- create the `skill-builder-artifacts` bucket
+
+The MinIO process is launched in the background and writes logs to:
+
+```text
+/workspace/.data/minio/minio.log
+```
+
+To stop the host-mode services later:
+
+```bash
+pnpm infra:down:host
+```
+
 ## Phase 0 health endpoints
 
 - Web health: `GET /api/health`
@@ -128,6 +155,9 @@ At bootstrap time, the following were verified:
 - Node.js, pnpm, Docker CLI, Docker Compose, `psql`, and Claude Code CLI are installed
 - Claude Code CLI is **not yet authenticated** (`claude auth status` returned `loggedIn: false`)
 - Docker daemon startup inside this VM failed because kernel/container networking support is restricted (`iptables nat` setup failed)
+- Host-mode fallback is now available:
+  - PostgreSQL 16 server is installed and can run locally
+  - MinIO server/client binaries are installed and can run locally
 
 ### What you need to do next
 
@@ -137,8 +167,16 @@ At bootstrap time, the following were verified:
    claude auth login
    ```
 
-2. If Docker continues to fail in this environment, either:
-   - enable a VM/container runtime with Docker support, or
-   - provide an alternative local Postgres + S3-compatible setup for Phase 1
+2. Start host-mode infra if Docker is still unavailable:
 
-Phase 1 should not begin until both the Claude login and local infra runtime are working end-to-end.
+   ```bash
+   pnpm infra:up:host
+   ```
+
+3. If you want to use Docker instead, you will still need a VM/container runtime that supports Docker networking.
+
+Phase 1 can proceed once:
+
+- `claude auth login` has completed successfully
+- `pnpm claude:preflight` returns authenticated status
+- either `pnpm infra:up` or `pnpm infra:up:host` is working end-to-end

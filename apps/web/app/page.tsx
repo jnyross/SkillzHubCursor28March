@@ -3,16 +3,17 @@ import styles from "./page.module.css";
 const commands = [
   "cp .env.example .env",
   "pnpm install",
-  "pnpm db:up",
+  "pnpm infra:up:host",
+  "pnpm claude:preflight",
   "pnpm dev:web",
   "pnpm dev:worker",
 ];
 
 const checklist = [
   "Install Claude Code CLI on the host machine.",
-  "Run `claude login` from the same shell profile used for the worker.",
+  "Run `claude auth login` from the same shell profile used for the worker.",
   "Verify `pnpm claude:smoke` succeeds before Phase 1 execution work.",
-  "Keep Postgres and MinIO running locally for all end-to-end testing.",
+  "Run `pnpm infra:up:host` to boot host PostgreSQL + MinIO before real end-to-end testing.",
 ];
 
 export default function Home() {
@@ -34,7 +35,7 @@ export default function Home() {
             <li>Next.js App Router web shell is bootstrapped.</li>
             <li>Worker package is ready for pg-boss and Claude CLI orchestration.</li>
             <li>Shared, db, and ui workspace packages are scaffolded.</li>
-            <li>Docker Compose provisions Postgres and MinIO for local development.</li>
+            <li>Both Docker Compose and host-mode Postgres/MinIO startup paths are documented.</li>
           </ul>
         </section>
 

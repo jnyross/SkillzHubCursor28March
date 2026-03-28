@@ -1,35 +1,18 @@
 import { NextResponse } from "next/server";
-import { spawnSync } from "node:child_process";
-
-const CLAUDE_BIN = process.env.CLAUDE_CODE_BIN || "claude";
-const SPAWN_ENV: NodeJS.ProcessEnv = {
-  PATH: process.env.PATH,
-  HOME: process.env.HOME,
-  NODE_ENV: process.env.NODE_ENV ?? "development",
-};
+import { runClaudePreflight } from "../../../../lib/claude-preflight";
 
 export async function GET() {
-  const result = spawnSync(CLAUDE_BIN, ["--version"], {
-    encoding: "utf8",
-    timeout: 15_000,
-    env: SPAWN_ENV,
-  });
-
-  const installed = result.status === 0;
+  const result = await runClaudePreflight();
+  const ok = result.status === "ok";
 
   return NextResponse.json(
     {
-      ok: installed,
-      command: `${CLAUDE_BIN} --version`,
-      installed,
-      stdout: result.stdout?.trim() ?? "",
-      stderr: result.stderr?.trim() ?? "",
-      exitCode: result.status,
-      signal: result.signal,
-      hint: installed
-        ? "Claude Code CLI is available on PATH."
+      ok,
+      ...result,
+      hint: ok
+        ? "Claude Code CLI is installed and authenticated."
         : "Install and authenticate Claude Code CLI before running live iteration tests.",
     },
-    { status: installed ? 200 : 503 },
+    { status: ok ? 200 : 503 },
   );
 }
