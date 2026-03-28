@@ -147,6 +147,17 @@ describe("project api routes", () => {
 
   it("updates project discovery details", async () => {
     const updatedAt = new Date().toISOString();
+    getProjectById.mockResolvedValue({
+      id: "proj_123",
+      name: "Skill Builder",
+      slug: "skill-builder",
+      status: "draft",
+      ownerUserId: "local-admin",
+      briefJson: null,
+      briefApprovedAt: null,
+      createdAt: updatedAt,
+      updatedAt,
+    });
     updateProject.mockResolvedValue({
       id: "proj_123",
       name: "Skill Builder",
