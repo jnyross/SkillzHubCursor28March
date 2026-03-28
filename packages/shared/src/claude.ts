@@ -1,5 +1,5 @@
-import { access } from "node:fs/promises";
 import { constants } from "node:fs";
+import { access } from "node:fs/promises";
 import { spawn } from "node:child_process";
 
 export type ClaudePreflightStatus = "ok" | "missing_binary" | "not_authenticated" | "error";
@@ -7,9 +7,11 @@ export type ClaudePreflightStatus = "ok" | "missing_binary" | "not_authenticated
 export interface ClaudePreflightResult {
   status: ClaudePreflightStatus;
   binaryPath: string;
-  command: string;
+  versionCommand: string;
+  authCommand: string;
   authenticated: boolean;
   version: string | null;
+  authMethod: string | null;
   stdout: string;
   stderr: string;
 }
@@ -30,29 +32,17 @@ async function commandExists(binaryPath: string) {
   }
 }
 
-export async function runClaudePreflight(
-  config: ClaudeRuntimeConfig = {},
-): Promise<ClaudePreflightResult> {
-  const binaryPath = config.binaryPath || process.env.CLAUDE_CODE_BIN || DEFAULT_CLAUDE_BINARY;
-  const command = `${binaryPath} --version`;
+interface CommandResult {
+  code: number | null;
+  stdout: string;
+  stderr: string;
+}
 
-  try {
-    await commandExists(binaryPath);
-  } catch {
-    return {
-      status: "missing_binary",
-      binaryPath,
-      command,
-      authenticated: false,
-      version: null,
-      stdout: "",
-      stderr: "Claude CLI binary is not executable or not found at the configured path.",
-    };
-  }
-
-  return new Promise<ClaudePreflightResult>((resolve) => {
-    const child = spawn(binaryPath, ["--version"], {
+async function runCommand(binaryPath: string, args: string[]): Promise<CommandResult> {
+  return new Promise<CommandResult>((resolve) => {
+    const child = spawn(binaryPath, args, {
       env: {
+        ...process.env,
         PATH: process.env.PATH ?? "",
         HOME: process.env.HOME ?? "",
       },
@@ -72,62 +62,100 @@ export async function runClaudePreflight(
 
     child.on("error", (error) => {
       resolve({
-        status: "missing_binary",
-        binaryPath,
-        command,
-        authenticated: false,
-        version: null,
+        code: 127,
         stdout: trimOutput(stdout),
         stderr: trimOutput(`${stderr}\n${error.message}`),
       });
     });
 
     child.on("close", (code) => {
-      const normalizedStdout = trimOutput(stdout);
-      const normalizedStderr = trimOutput(stderr);
-      const combined = `${normalizedStdout}\n${normalizedStderr}`.toLowerCase();
-      const version = normalizedStdout || null;
-
-      if (code === 0) {
-        resolve({
-          status: "ok",
-          binaryPath,
-          command,
-          authenticated: true,
-          version,
-          stdout: normalizedStdout,
-          stderr: normalizedStderr,
-        });
-        return;
-      }
-
-      if (
-        combined.includes("login") ||
-        combined.includes("sign in") ||
-        combined.includes("authenticate") ||
-        combined.includes("auth")
-      ) {
-        resolve({
-          status: "not_authenticated",
-          binaryPath,
-          command,
-          authenticated: false,
-          version,
-          stdout: normalizedStdout,
-          stderr: normalizedStderr,
-        });
-        return;
-      }
-
       resolve({
-        status: "error",
-        binaryPath,
-        command,
-        authenticated: false,
-        version,
-        stdout: normalizedStdout,
-        stderr: normalizedStderr,
+        code,
+        stdout: trimOutput(stdout),
+        stderr: trimOutput(stderr),
       });
     });
   });
+}
+
+export async function runClaudePreflight(
+  config: ClaudeRuntimeConfig = {},
+): Promise<ClaudePreflightResult> {
+  const binaryPath = config.binaryPath || process.env.CLAUDE_CODE_BIN || DEFAULT_CLAUDE_BINARY;
+  const versionCommand = `${binaryPath} --version`;
+  const authCommand = `${binaryPath} auth status`;
+
+  try {
+    await commandExists(binaryPath);
+  } catch {
+    return {
+      status: "missing_binary",
+      binaryPath,
+      versionCommand,
+      authCommand,
+      authenticated: false,
+      version: null,
+      authMethod: null,
+      stdout: "",
+      stderr: "Claude CLI binary is not executable or not found at the configured path.",
+    };
+  }
+
+  const versionResult = await runCommand(binaryPath, ["--version"]);
+  const version = versionResult.stdout || null;
+
+  if (versionResult.code !== 0) {
+    return {
+      status: "error",
+      binaryPath,
+      versionCommand,
+      authCommand,
+      authenticated: false,
+      version,
+      authMethod: null,
+      stdout: versionResult.stdout,
+      stderr: versionResult.stderr,
+    };
+  }
+
+  const authResult = await runCommand(binaryPath, ["auth", "status"]);
+  const authPayload = `${authResult.stdout}\n${authResult.stderr}`;
+  const normalizedAuth = authPayload.toLowerCase();
+
+  let loggedIn = false;
+  let authMethod: string | null = null;
+
+  try {
+    const parsed = JSON.parse(authResult.stdout);
+    loggedIn = Boolean(parsed.loggedIn);
+    authMethod = typeof parsed.authMethod === "string" ? parsed.authMethod : null;
+  } catch {
+    loggedIn = authResult.code === 0 && !normalizedAuth.includes('"loggedin": false');
+  }
+
+  if (!loggedIn) {
+    return {
+      status: "not_authenticated",
+      binaryPath,
+      versionCommand,
+      authCommand,
+      authenticated: false,
+      version,
+      authMethod,
+      stdout: authResult.stdout,
+      stderr: authResult.stderr,
+    };
+  }
+
+  return {
+    status: "ok",
+    binaryPath,
+    versionCommand,
+    authCommand,
+    authenticated: true,
+    version,
+    authMethod,
+    stdout: authResult.stdout,
+    stderr: authResult.stderr,
+  };
 }

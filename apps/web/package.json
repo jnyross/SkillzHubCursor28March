@@ -6,9 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint .",
-    "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "lint": "pnpm exec eslint .",
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "pnpm exec tsc --noEmit"
   },
   "dependencies": {
     "next": "16.2.1",

@@ -2,15 +2,17 @@ import { NextResponse } from "next/server";
 import { spawnSync } from "node:child_process";
 
 const CLAUDE_BIN = process.env.CLAUDE_CODE_BIN || "claude";
+const SPAWN_ENV: NodeJS.ProcessEnv = {
+  PATH: process.env.PATH,
+  HOME: process.env.HOME,
+  NODE_ENV: process.env.NODE_ENV ?? "development",
+};
 
 export async function GET() {
   const result = spawnSync(CLAUDE_BIN, ["--version"], {
     encoding: "utf8",
     timeout: 15_000,
-    env: {
-      PATH: process.env.PATH,
-      HOME: process.env.HOME,
-    },
+    env: SPAWN_ENV,
   });
 
   const installed = result.status === 0;
