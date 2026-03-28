@@ -2,7 +2,7 @@ import { sharedEnv } from "@skill-builder/shared";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { parseJsonBody, unauthorized } from "../../../../lib/api";
+import { parseJsonBody, unauthorized, unwrapParsedBody } from "../../../../lib/api";
 import { createSessionCookie, verifyPassword } from "../../../../lib/auth";
 
 const loginInputSchema = z.object({
@@ -12,7 +12,7 @@ const loginInputSchema = z.object({
 
 export async function POST(request: Request) {
   const parsed = await parseJsonBody(request, loginInputSchema);
-  if (!parsed.success) {
+  if (!unwrapParsedBody(parsed)) {
     return parsed.response;
   }
 

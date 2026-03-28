@@ -18,9 +18,9 @@ export async function PATCH(request: Request, context: DiscoveryRouteContext) {
     return unauthorized();
   }
 
-  const brief = await parseJsonBody(request, projectBriefSchema);
-  if (!brief.success) {
-    return brief.response;
+  const briefResult = await parseJsonBody(request, projectBriefSchema);
+  if (!briefResult.success) {
+    return briefResult.response;
   }
 
   const { projectId } = await context.params;
@@ -32,7 +32,7 @@ export async function PATCH(request: Request, context: DiscoveryRouteContext) {
 
   try {
     const updated = await updateProject(db, projectId, {
-      briefJson: brief.data,
+      briefJson: briefResult.data,
       briefApprovedAt: null,
     });
 

@@ -258,11 +258,12 @@ export async function updateProject(
 export async function approveProjectBrief(
   db: Database,
   projectId: string,
+  briefApprovedAt = new Date(),
 ): Promise<ProjectRecord> {
   const [updated] = await db
     .update(projects)
     .set({
-      briefApprovedAt: new Date(),
+      briefApprovedAt,
       updatedAt: new Date(),
     })
     .where(eq(projects.id, projectId))

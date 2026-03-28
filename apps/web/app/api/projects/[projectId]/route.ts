@@ -37,7 +37,7 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
 
   const parsed = await parseJsonBody(request, updateProjectInputSchema);
-  if (!parsed.success) {
+  if (!parsed.ok) {
     return parsed.response;
   }
 
