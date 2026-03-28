@@ -177,6 +177,10 @@ export async function requireAuthenticatedRequest() {
   return requireAuthenticatedSession();
 }
 
+export async function getSessionUser() {
+  return getSessionFromCookies();
+}
+
 export function isPublicPath(pathname: string) {
   return (
     pathname === "/" ||

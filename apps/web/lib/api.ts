@@ -110,3 +110,16 @@ export function unwrapParsedBody<T>(
 ): parsed is { success: true; data: T } {
   return parsed.success;
 }
+
+export async function parseRequiredJsonBody<T>(
+  request: Request,
+  schema: ZodType<T>,
+): Promise<T | NextResponse> {
+  const parsed = await parseJsonBody(request, schema);
+
+  if (!unwrapParsedBody(parsed)) {
+    return parsed.response;
+  }
+
+  return parsed.data;
+}

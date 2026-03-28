@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 
 import { db, getProjectById, updateProject } from "@skill-builder/db";
-import { projectBriefSchema, projectRecordSchema } from "@skill-builder/shared";
+import {
+  projectBriefSchema,
+  projectRecordSchema,
+  type ProjectBrief,
+} from "@skill-builder/shared";
 
 import {
   notFound,
@@ -35,6 +39,8 @@ export async function PATCH(request: Request, context: DiscoveryRouteContext) {
     );
   }
 
+  const brief = parsed.data as ProjectBrief;
+
   const { projectId } = await context.params;
   const project = await getProjectById(db, projectId);
 
@@ -44,7 +50,7 @@ export async function PATCH(request: Request, context: DiscoveryRouteContext) {
 
   try {
     const updated = await updateProject(db, projectId, {
-      briefJson: parsed.data as unknown as Record<string, unknown>,
+      briefJson: brief as unknown as Record<string, unknown>,
       briefApprovedAt: null,
     });
 

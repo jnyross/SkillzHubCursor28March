@@ -19,7 +19,7 @@ export async function POST(request: Request, context: RouteContext) {
   }
 
   const { projectId } = await context.params;
-  const body = await request.json().catch(() => ({})) as { briefApprovedAt?: string };
+  const body = (await request.json().catch(() => ({}))) as { briefApprovedAt?: string };
   const parsed = z
     .object({
       briefApprovedAt: z.string().datetime().optional(),
