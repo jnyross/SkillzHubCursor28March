@@ -9,9 +9,13 @@ export default function NewProjectPage() {
 
     const cookieStore = await cookies();
     const cookieHeader = cookieStore.toString();
-    const result = await createProjectAction(cookieHeader || null, formData);
+    const result = await createProjectAction(
+      cookieHeader || null,
+      { error: null, success: null },
+      formData,
+    );
 
-    if (!result.error) {
+    if (result.success) {
       redirect("/projects");
     }
   }

@@ -62,7 +62,7 @@ describe("project pages", () => {
 
   it("loads the new project page", async () => {
     const NewProjectPage = (await import("../app/(dashboard)/projects/new/page")).default;
-    const page = await NewProjectPage();
+    const page = await NewProjectPage({});
 
     expect(page).toBeTruthy();
   });
