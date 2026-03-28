@@ -5,6 +5,6 @@ import { getWorkerConfig } from "./config";
 const config = getWorkerConfig();
 
 export const workerLogger = pino({
-  service: "worker",
+  name: "skill-builder-worker",
   level: config.logLevel,
 });

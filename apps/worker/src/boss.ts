@@ -16,11 +16,6 @@ export function createBoss(config: WorkerConfig) {
   return new PgBoss({
     connectionString: config.databaseUrl,
     schema: config.queue.schema,
-    retryLimit: 2,
-    retryDelay: 5,
-    archiveCompletedAfterSeconds: 60 * 60 * 24,
-    archiveFailedAfterSeconds: 60 * 60 * 24 * 7,
-    deleteAfterDays: 14,
     monitorStateIntervalSeconds: 0,
     newJobCheckIntervalSeconds: config.queue.newJobCheckIntervalSeconds,
   });

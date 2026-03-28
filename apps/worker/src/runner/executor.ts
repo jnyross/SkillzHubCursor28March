@@ -46,12 +46,12 @@ function buildClaudeCommandArgs(
   input: RunnerExecutionInput,
   cwd: string,
 ) {
-  const model = input.model ?? env.CLAUDE_CODE_MODEL;
+  const model = input.model ?? env.claudeModel;
 
   return {
-    binaryPath: env.CLAUDE_CODE_BIN,
+    binaryPath: env.claudeBinary,
     cwd,
-    timeoutMs: input.timeoutMs ?? env.CLAUDE_CODE_TIMEOUT_MS,
+    timeoutMs: input.timeoutMs ?? env.claudeTimeoutMs,
     args: [
       "--bare",
       "--print",
@@ -63,11 +63,11 @@ function buildClaudeCommandArgs(
       "--model",
       model,
       "--max-turns",
-      String(input.maxTurns ?? env.CLAUDE_CODE_MAX_TURNS),
+      String(input.maxTurns ?? env.claudeMaxTurns),
       "--max-budget-usd",
-      String(input.maxBudgetUsd ?? env.CLAUDE_CODE_MAX_BUDGET_USD),
+      String(input.maxBudgetUsd ?? env.claudeMaxBudgetUsd),
       "--allowedTools",
-      ...env.CLAUDE_CODE_ALLOWED_TOOLS,
+      ...env.claudeAllowedTools,
       "-p",
       input.prompt,
     ],
