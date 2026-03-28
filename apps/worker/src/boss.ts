@@ -3,16 +3,26 @@ import PgBoss from "pg-boss";
 import type { WorkerConfig } from "./config";
 import { workerLogger } from "./logger";
 
+export type WorkerBossRegistration = {
+  name: string;
+  options?: {
+    retryLimit?: number;
+    retryDelay?: number;
+    expireInSeconds?: number;
+  };
+};
+
 export function createBoss(config: WorkerConfig) {
   return new PgBoss({
     connectionString: config.databaseUrl,
-    schema: config.bossSchema,
+    schema: config.queue.schema,
     retryLimit: 2,
     retryDelay: 5,
     archiveCompletedAfterSeconds: 60 * 60 * 24,
     archiveFailedAfterSeconds: 60 * 60 * 24 * 7,
     deleteAfterDays: 14,
     monitorStateIntervalSeconds: 0,
+    newJobCheckIntervalSeconds: config.queue.newJobCheckIntervalSeconds,
   });
 }
 
@@ -20,6 +30,20 @@ export async function startBoss(boss: PgBoss) {
   await boss.start();
   workerLogger.info({ event: "worker.boss.started" }, "pg-boss started");
   return boss;
+}
+
+export async function ensureQueue(
+  boss: PgBoss,
+  registration: WorkerBossRegistration,
+) {
+  await boss.createQueue(registration.name);
+  workerLogger.info(
+    {
+      event: "worker.queue.ready",
+      queue: registration.name,
+    },
+    "queue registered",
+  );
 }
 
 export async function createWorkerBoss(config: WorkerConfig) {

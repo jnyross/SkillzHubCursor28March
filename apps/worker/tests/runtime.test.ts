@@ -9,7 +9,7 @@ const queueNames = vi.hoisted(() => ({
 }));
 
 vi.mock("pg-boss", () => ({
-  default: vi.fn().mockImplementation(() => queueNames),
+  PgBoss: vi.fn().mockImplementation(() => queueNames),
 }));
 
 describe("worker runtime scaffolding", () => {
@@ -40,18 +40,18 @@ describe("worker runtime scaffolding", () => {
     const config = readWorkerConfig();
 
     expect(config.port).toBe(3001);
-    expect(config.queue.launchQueue).toBe("iteration.launch");
-    expect(config.s3.bucket).toBe("skill-builder-artifacts");
-    expect(config.claude.model).toBe("claude-sonnet-4-5");
+    expect(config.queue.name).toBe("iteration.launch");
+    expect(config.runtimeEnv.S3_BUCKET).toBe("skill-builder-artifacts");
+    expect(config.runtimeEnv.CLAUDE_CODE_MODEL).toBe("claude-sonnet-4-5");
   });
 
   it("creates a workdir in the configured temp root", async () => {
     const { createRunWorkdir, cleanupRunWorkdir } = await import("../src/runner/workdir");
+    const { readWorkerConfig } = await import("../src/config");
 
-    const workdir = await createRunWorkdir("/tmp");
+    const workdir = await createRunWorkdir(readWorkerConfig());
     expect(workdir.path).toContain("skill-builder-run-");
-    expect(workdir.cleanup).toBeDefined();
 
-    await cleanupRunWorkdir(workdir);
+    await cleanupRunWorkdir(workdir.path);
   });
 });

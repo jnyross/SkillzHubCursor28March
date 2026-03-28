@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-import type { EnumeratedArtifact } from "./enumerate";
+import type { RunnerOutputFile } from "../runner/types";
 
 export interface ArtifactManifestEntry {
   path: string;
@@ -15,11 +15,9 @@ export interface ArtifactManifest {
   manifestHash: string;
 }
 
-export function buildArtifactManifest(
-  files: EnumeratedArtifact[],
-): ArtifactManifest {
+export function createArtifactManifest(files: RunnerOutputFile[]): ArtifactManifest {
   const manifestFiles = files.map((file) => ({
-    path: file.relativePath,
+    path: file.path,
     sha256: file.sha256,
     sizeBytes: file.sizeBytes,
   }));

@@ -1,7 +1,7 @@
 import { rm } from "node:fs/promises";
 
-import { createArtifactManifest } from "./manifest";
-import { uploadArtifacts } from "./storage";
+import { buildArtifactManifest } from "./manifest";
+import { uploadArtifactFiles } from "./storage";
 import type { RunnerExecutionOutput } from "../runner/types";
 
 export async function finalizeRunArtifacts(
@@ -10,9 +10,9 @@ export async function finalizeRunArtifacts(
   runId: string,
   result: RunnerExecutionOutput,
 ) {
-  const manifest = createArtifactManifest(result.outputFiles);
+  const manifest = buildArtifactManifest(result.outputFiles);
   const prefix = `projects/${projectId}/iterations/${iterationId}/runs/${runId}`;
-  const uploaded = await uploadArtifacts(prefix, result.outputFiles);
+  const uploaded = await uploadArtifactFiles(prefix, result.outputFiles);
 
   return {
     manifest,

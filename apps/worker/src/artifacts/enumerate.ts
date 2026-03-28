@@ -1,15 +1,16 @@
 import { readdir, stat } from "node:fs/promises";
 import { join, relative } from "node:path";
 
-export type ArtifactFile = {
+export type EnumeratedArtifact = {
   absolutePath: string;
   relativePath: string;
-  size: number;
+  sizeBytes: number;
+  sha256?: string;
 };
 
-async function walkDirectory(root: string, current: string): Promise<ArtifactFile[]> {
+async function walkDirectory(root: string, current: string): Promise<EnumeratedArtifact[]> {
   const entries = await readdir(current, { withFileTypes: true });
-  const files: ArtifactFile[] = [];
+  const files: EnumeratedArtifact[] = [];
 
   for (const entry of entries) {
     const absolutePath = join(current, entry.name);
@@ -27,7 +28,7 @@ async function walkDirectory(root: string, current: string): Promise<ArtifactFil
     files.push({
       absolutePath,
       relativePath: relative(root, absolutePath),
-      size: fileStat.size,
+      sizeBytes: fileStat.size,
     });
   }
 

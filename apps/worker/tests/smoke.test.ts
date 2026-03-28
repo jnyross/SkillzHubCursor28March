@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { getWorkerConfig } from "../src/config";
+import { readWorkerConfig } from "../src/config";
 
 describe("worker scaffold", () => {
   it("loads worker config defaults", () => {
-    const config = getWorkerConfig();
+    const config = readWorkerConfig();
 
     expect(config.port).toBeGreaterThan(0);
-    expect(config.claudeBinary).toBeTruthy();
-    expect(config.s3Bucket).toBeTruthy();
+    expect(config.runtimeEnv.CLAUDE_CODE_BIN).toBeTruthy();
+    expect(config.runtimeEnv.S3_BUCKET).toBeTruthy();
   });
 });
