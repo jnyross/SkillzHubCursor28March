@@ -1,0 +1,90 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+  background: linear-gradient(180deg, #0f172a 0%, #111827 100%);
+  color: #e5e7eb;
+}
+
+.main {
+  width: min(100%, 860px);
+  display: grid;
+  gap: 2rem;
+}
+
+.hero {
+  display: grid;
+  gap: 1rem;
+}
+
+.eyebrow {
+  display: inline-flex;
+  width: fit-content;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 999px;
+  color: #93c5fd;
+  background: rgba(30, 41, 59, 0.55);
+  font-size: 0.875rem;
+  letter-spacing: 0.02em;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+  line-height: 1.05;
+}
+
+.description {
+  margin: 0;
+  max-width: 60ch;
+  color: #cbd5e1;
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
+.section {
+  display: grid;
+  gap: 1rem;
+  padding: 1.5rem;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 1rem;
+  background: rgba(15, 23, 42, 0.7);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.2);
+}
+
+.section h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.section ul,
+.section ol {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: #cbd5e1;
+  line-height: 1.7;
+}
+
+.commands {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.commands code {
+  display: block;
+  padding: 0.875rem 1rem;
+  border-radius: 0.75rem;
+  background: #020617;
+  color: #bfdbfe;
+  border: 1px solid rgba(96, 165, 250, 0.2);
+  overflow-x: auto;
+}
+
+@media (max-width: 600px) {
+  .main {
+    gap: 1.5rem;
+  }
+}

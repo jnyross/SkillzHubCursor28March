@@ -1,0 +1,34 @@
+{
+  "name": "skill-builder-webapp",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.32.1",
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=10.32.1"
+  },
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "dev:web": "pnpm --filter web dev",
+    "dev:worker": "pnpm --filter worker dev",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:reset": "docker compose down -v",
+    "claude:smoke": "claude --version",
+    "claude:preflight": "node -e \"import('@skill-builder/shared').then(async (m) => { const result = await m.runClaudePreflight(); console.log(JSON.stringify(result, null, 2)); process.exit(result.status === 'ok' ? 0 : 1); });\""
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.17",
+    "eslint": "^9.39.1",
+    "prettier": "^3.6.2",
+    "turbo": "^2.5.8",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}
