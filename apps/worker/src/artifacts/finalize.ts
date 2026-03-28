@@ -14,7 +14,16 @@ export async function finalizeRunArtifacts(
 ) {
   const manifest = createArtifactManifest(result.outputFiles);
   const prefix = `projects/${projectId}/iterations/${iterationId}/runs/${runId}`;
-  const uploaded = await uploadArtifactFiles(config, prefix, result.outputFiles);
+  const uploaded = await uploadArtifactFiles(
+    config,
+    prefix,
+    result.outputFiles.map((file) => ({
+      absolutePath: file.path,
+      relativePath: file.path,
+      sha256: file.sha256,
+      sizeBytes: file.sizeBytes,
+    })),
+  );
 
   return {
     manifest,

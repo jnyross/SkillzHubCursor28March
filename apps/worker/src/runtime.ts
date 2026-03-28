@@ -1,5 +1,5 @@
 import { createServer, type Server } from "node:http";
-import PgBoss from "pg-boss";
+import type { PgBoss } from "pg-boss";
 
 import { pool } from "@skill-builder/db";
 
@@ -24,8 +24,11 @@ export async function startWorkerRuntime(): Promise<WorkerRuntime> {
 
   const boss = createBoss(config);
   await boss.start();
-  await boss.createQueue(config.queue.name);
-  logger.info({ event: "worker.boss.started", queue: config.queue.name }, "pg-boss started");
+  await boss.createQueue(config.queue.launchQueue);
+  logger.info(
+    { event: "worker.boss.started", queue: config.queue.launchQueue },
+    "pg-boss started",
+  );
 
   const server = createServer(async (_request, response) => {
     const connectionState = await pool.query("select current_database() as database_name");
@@ -37,7 +40,7 @@ export async function startWorkerRuntime(): Promise<WorkerRuntime> {
         status: "ok",
         port: config.port,
         bossSchema: config.queue.schema,
-        queueName: config.queue.name,
+        queueName: config.queue.launchQueue,
         database: connectionState.rows[0]?.database_name ?? null,
         timestamp: new Date().toISOString(),
       }),

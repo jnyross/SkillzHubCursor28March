@@ -93,6 +93,7 @@ export async function executeRunner(
 ): Promise<RunnerExecutionOutput> {
   const workdir = await createRunWorkdir(tmpRoot);
   const transcriptPath = join(workdir.path, "claude-output.json");
+  const resolvedModel = input.model ?? env.claudeModel;
 
   try {
     await writeInputFiles(workdir.path, input.inputFiles);
@@ -116,6 +117,7 @@ export async function executeRunner(
         rawStdout: commandResult.stdout,
         rawStderr: commandResult.stderr,
         failureReason: parsed.failureReason ?? `claude_exit_${commandResult.exitCode ?? "unknown"}`,
+        workspacePath: keepWorkdirs ? workdir.path : null,
       };
     }
 
@@ -125,7 +127,7 @@ export async function executeRunner(
     return {
       status: "succeeded",
       provider: "claude-code",
-      modelId: parsed.modelId ?? (input.model ?? env.CLAUDE_CODE_MODEL),
+      modelId: parsed.modelId ?? resolvedModel,
       totalTokens: null,
       durationMs: parsed.durationMs ?? commandResult.durationMs,
       totalCostUsd: parsed.totalCostUsd,
@@ -134,6 +136,7 @@ export async function executeRunner(
       rawStdout: commandResult.stdout,
       rawStderr: commandResult.stderr,
       failureReason: null,
+      workspacePath: workdir.path,
     };
   } finally {
     if (!keepWorkdirs) {

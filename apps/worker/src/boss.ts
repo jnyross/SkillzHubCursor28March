@@ -1,4 +1,4 @@
-import PgBoss from "pg-boss";
+import { PgBoss } from "pg-boss";
 
 import type { WorkerConfig } from "./config";
 import { workerLogger } from "./logger";

@@ -34,20 +34,20 @@ describe("worker runtime scaffolding", () => {
   });
 
   it("builds the worker config from environment", async () => {
-    const { readWorkerConfig } = await import("../src/config");
-    const config = readWorkerConfig();
+    const { getWorkerConfig } = await import("../src/config");
+    const config = getWorkerConfig();
 
     expect(config.port).toBe(3001);
-    expect(config.queue.name).toBe("iteration.launch");
+    expect(config.queue.launchQueue).toBe("iteration.launch");
     expect(config.runtimeEnv.s3Bucket).toBe("skill-builder-artifacts");
     expect(config.runtimeEnv.claudeModel).toBe("claude-sonnet-4-5");
   });
 
   it("creates a workdir in the configured temp root", async () => {
     const { createRunWorkdir, cleanupRunWorkdir } = await import("../src/runner/workdir");
-    const { readWorkerConfig } = await import("../src/config");
+    const { getWorkerConfig } = await import("../src/config");
 
-    const workdir = await createRunWorkdir(readWorkerConfig());
+    const workdir = await createRunWorkdir(getWorkerConfig().run.tmpRoot);
     expect(workdir.path).toContain("skill-builder-run-");
 
     await cleanupRunWorkdir(workdir.path);
