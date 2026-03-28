@@ -21,7 +21,7 @@
     "db:down": "docker compose down",
     "db:reset": "docker compose down -v",
     "claude:smoke": "claude --version",
-    "claude:preflight": "node --experimental-strip-types -e \"import('./packages/shared/src/index.ts').then(async (m) => { const result = await m.runClaudePreflight(); console.log(JSON.stringify(result, null, 2)); process.exit(result.status === 'ok' ? 0 : 1); });\""
+    "claude:preflight": "node scripts/claude-preflight.mjs"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",

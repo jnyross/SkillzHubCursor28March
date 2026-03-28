@@ -1,4 +1,4 @@
-export * from "./claude.ts";
+export * from "./claude";
 
 export const sharedPackageName = "@skill-builder/shared";
 
