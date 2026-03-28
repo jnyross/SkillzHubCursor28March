@@ -1,4 +1,5 @@
 import styles from "./page.module.css";
+import { getSessionUser } from "../lib/auth";
 
 const commands = [
   "cp .env.example .env",
@@ -16,7 +17,8 @@ const checklist = [
   "Run `pnpm infra:up:host` to boot host PostgreSQL + MinIO before real end-to-end testing.",
 ];
 
-export default function Home() {
+export default async function Home() {
+  const session = await getSessionUser();
   return (
     <div className={styles.page}>
       <main className={styles.main}>
@@ -36,6 +38,9 @@ export default function Home() {
             <li>Worker package is ready for pg-boss and Claude CLI orchestration.</li>
             <li>Shared, db, and ui workspace packages are scaffolded.</li>
             <li>Both Docker Compose and host-mode Postgres/MinIO startup paths are documented.</li>
+            <li>
+              Auth status: {session ? `signed in as ${session.username}` : "not signed in"}
+            </li>
           </ul>
         </section>
 

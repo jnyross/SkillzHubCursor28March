@@ -43,13 +43,21 @@ packages/
    pnpm infra:up:host
    ```
 
-4. Start the web app:
+4. Sign in to the local app once:
+
+   ```bash
+   curl -i -X POST http://127.0.0.1:3000/api/auth/login \
+     -H 'content-type: application/json' \
+     -d '{"username":"local-admin","password":"replace-me"}'
+   ```
+
+5. Start the web app:
 
    ```bash
    pnpm dev:web
    ```
 
-5. Start the worker:
+6. Start the worker:
 
    ```bash
    pnpm dev:worker
@@ -94,6 +102,36 @@ Expected result:
 - `claude --version` succeeds
 - `claude auth status` reports `loggedIn: true`
 - `/api/claude/preflight` returns `ok: true`
+
+## Local app authentication
+
+Phase 2 introduces a single-user password gate backed by signed cookies.
+
+- Login route: `POST /api/auth/login`
+- Logout route: `POST /api/auth/logout`
+- Session route: `GET /api/auth/session`
+- Protected pages live under `/projects`
+
+Expected credentials come from `.env`:
+
+- `APP_LOCAL_USER`
+- `APP_LOCAL_PASSWORD`
+- `APP_SESSION_SECRET`
+
+Example login request:
+
+```bash
+curl -i -X POST http://127.0.0.1:3000/api/auth/login \
+  -H 'content-type: application/json' \
+  -d '{"username":"local-admin","password":"replace-me"}'
+```
+
+To inspect the authenticated session:
+
+```bash
+curl -i http://127.0.0.1:3000/api/auth/session \
+  -H 'cookie: skill_builder_session=<cookie-value>'
+```
 
 ## Local infrastructure
 
