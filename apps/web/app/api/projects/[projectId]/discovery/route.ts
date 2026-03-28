@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 
 import { db, getProjectById, updateProject } from "@skill-builder/db";
-import { projectBriefSchema } from "@skill-builder/shared";
+import { projectBriefSchema, projectRecordSchema } from "@skill-builder/shared";
 
-import { badRequest, serverError } from "../../../../../lib/api";
-import { requireAuthenticatedSession } from "../../../../../lib/auth";
+import { badRequest, parseJsonBody, notFound, unauthorized, serverError } from "../../../../../lib/api";
+import { getCurrentSession } from "../../../../../lib/session";
 
 interface DiscoveryRouteContext {
   params: Promise<{
@@ -13,40 +13,29 @@ interface DiscoveryRouteContext {
 }
 
 export async function PATCH(request: Request, context: DiscoveryRouteContext) {
-  const session = await requireAuthenticatedSession();
-  if (!session.ok) {
-    return session.response;
+  const session = await getCurrentSession();
+  if (!session) {
+    return unauthorized();
   }
 
-  const body = await request.json().catch(() => null);
-  const parsed = projectBriefSchema.safeParse(body);
-
-  if (!parsed.success) {
-    return badRequest("INVALID_PROJECT_BRIEF", parsed.error.flatten());
-  }
+  const brief = await parseJsonBody(request, projectBriefSchema);
 
   const { projectId } = await context.params;
   const project = await getProjectById(db, projectId);
 
   if (!project) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: "PROJECT_NOT_FOUND",
-      },
-      { status: 404 },
-    );
+    return notFound("PROJECT_NOT_FOUND", "Project not found.");
   }
 
   try {
     const updated = await updateProject(db, projectId, {
-      briefJson: parsed.data,
+      briefJson: brief,
       briefApprovedAt: null,
     });
 
     return NextResponse.json({
       ok: true,
-      project: updated,
+      project: projectRecordSchema.parse(updated),
     });
   } catch (error) {
     return serverError(error);

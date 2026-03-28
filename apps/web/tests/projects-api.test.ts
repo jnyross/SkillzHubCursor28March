@@ -3,9 +3,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const createProject = vi.fn();
 const getProjectById = vi.fn();
 const getLatestProject = vi.fn();
+const listProjects = vi.fn();
 const updateProject = vi.fn();
 const approveProjectBrief = vi.fn();
-const getSessionFromCookieStore = vi.fn();
+const getSessionFromCookies = vi.fn();
 const requireAuthenticatedRequest = vi.fn();
 const requireAuthenticatedSession = vi.fn();
 
@@ -14,14 +15,18 @@ vi.mock("@skill-builder/db", () => ({
   createProject: (...args: unknown[]) => createProject(...args),
   getProjectById: (...args: unknown[]) => getProjectById(...args),
   getLatestProject: (...args: unknown[]) => getLatestProject(...args),
+  listProjects: (...args: unknown[]) => listProjects(...args),
   updateProject: (...args: unknown[]) => updateProject(...args),
   approveProjectBrief: (...args: unknown[]) => approveProjectBrief(...args),
 }));
 
 vi.mock("../lib/auth", () => ({
-  getSessionFromCookieStore: (...args: unknown[]) => getSessionFromCookieStore(...args),
   requireAuthenticatedRequest: (...args: unknown[]) => requireAuthenticatedRequest(...args),
   requireAuthenticatedSession: (...args: unknown[]) => requireAuthenticatedSession(...args),
+}));
+
+vi.mock("../lib/session", () => ({
+  getSessionFromCookies: (...args: unknown[]) => getSessionFromCookies(...args),
 }));
 
 describe("project api routes", () => {
@@ -29,21 +34,27 @@ describe("project api routes", () => {
     createProject.mockReset();
     getProjectById.mockReset();
     getLatestProject.mockReset();
+    listProjects.mockReset();
     updateProject.mockReset();
     approveProjectBrief.mockReset();
-    getSessionFromCookieStore.mockReset();
+    getSessionFromCookies.mockReset();
     requireAuthenticatedRequest.mockReset();
     requireAuthenticatedSession.mockReset();
 
-    getSessionFromCookieStore.mockResolvedValue({
+    getSessionFromCookies.mockResolvedValue({
       user: "local-admin",
     });
     requireAuthenticatedRequest.mockResolvedValue({
-      user: "local-admin",
+      ok: true,
+      session: {
+        user: "local-admin",
+      },
     });
     requireAuthenticatedSession.mockResolvedValue({
       ok: true,
-      user: "local-admin",
+      session: {
+        user: "local-admin",
+      },
     });
   });
 
@@ -96,6 +107,19 @@ describe("project api routes", () => {
       createdAt,
       updatedAt: createdAt,
     });
+    listProjects.mockResolvedValue([
+      {
+        id: "proj_latest",
+        name: "Latest Project",
+        slug: "latest-project",
+        status: "draft",
+        ownerUserId: "local-admin",
+        briefJson: null,
+        briefApprovedAt: null,
+        createdAt,
+        updatedAt: createdAt,
+      },
+    ]);
 
     const { GET } = await import("../app/api/projects/route");
     const response = await GET();
@@ -103,9 +127,14 @@ describe("project api routes", () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toMatchObject({
       ok: true,
-      project: {
+      latestProject: {
         slug: "latest-project",
       },
+      projects: [
+        {
+          slug: "latest-project",
+        },
+      ],
     });
     expect(requireAuthenticatedRequest).toHaveBeenCalled();
   });
@@ -199,6 +228,6 @@ describe("project api routes", () => {
         briefApprovedAt: approvedAt,
       },
     });
-    expect(approveProjectBrief).toHaveBeenCalledWith({}, "proj_123");
+    expect(approveProjectBrief).toHaveBeenCalledWith({}, "proj_123", undefined);
   });
 });

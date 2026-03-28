@@ -3,13 +3,13 @@ import { NextResponse } from "next/server";
 import { createProjectInputSchema, projectRecordSchema } from "@skill-builder/shared";
 import { createProject, db, getLatestProject, listProjects } from "@skill-builder/db";
 
-import { jsonError, parseJsonBody } from "../../../lib/api";
-import { requireAuthenticatedRequest } from "../../../lib/auth";
+import { parseJsonBody, unauthorized } from "../../../lib/api";
+import { getSessionFromCookies } from "../../../lib/session";
 
 export async function GET() {
-  const session = await requireAuthenticatedRequest();
-  if (!session.ok) {
-    return session.response;
+  const session = await getSessionFromCookies();
+  if (!session) {
+    return unauthorized();
   }
 
   const [latestProject, projects] = await Promise.all([
@@ -25,20 +25,20 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const session = await requireAuthenticatedRequest();
-  if (!session.ok) {
-    return session.response;
+  const session = await getSessionFromCookies();
+  if (!session) {
+    return unauthorized();
   }
 
   const parsed = await parseJsonBody(request, createProjectInputSchema);
   if (!parsed.success) {
-    return jsonError("INVALID_PROJECT_INPUT", "Project payload is invalid.", 400, parsed.error);
+    return parsed.response;
   }
 
   const project = await createProject(db, {
     name: parsed.data.name,
     slug: parsed.data.slug,
-    ownerUserId: session.session.user,
+    ownerUserId: session.user,
     briefJson: parsed.data.brief ?? null,
   });
 

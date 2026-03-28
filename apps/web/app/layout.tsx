@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { getSession } from "../lib/session";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -23,11 +22,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await getSession();
-
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body data-authenticated={session.authenticated ? "true" : "false"}>{children}</body>
+      <body>{children}</body>
     </html>
   );
 }

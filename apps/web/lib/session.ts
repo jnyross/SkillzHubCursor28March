@@ -20,6 +20,22 @@ export async function getCurrentSession(): Promise<AuthSession | null> {
   return verifySessionCookieValue(cookie.value);
 }
 
+export async function getSession(): Promise<{
+  authenticated: boolean;
+  user: string | null;
+}> {
+  const session = await getCurrentSession();
+
+  return {
+    authenticated: Boolean(session),
+    user: session?.user ?? null,
+  };
+}
+
+export async function getSessionFromCookies(): Promise<AuthSession | null> {
+  return getCurrentSession();
+}
+
 export function attachAuthenticatedSession(response: NextResponse, user?: string) {
   response.cookies.set(createSessionCookie(user));
   return response;
@@ -28,41 +44,4 @@ export function attachAuthenticatedSession(response: NextResponse, user?: string
 export function clearAuthSession(response: NextResponse) {
   response.cookies.set(authCookieName, "", clearSessionCookieOptions());
   return response;
-}
-import { cookies } from "next/headers";
-
-import {
-  authCookieName,
-  clearSessionCookieOptions,
-  createSessionCookieValue,
-  getSessionCookieMaxAgeSeconds,
-  sessionCookieOptions,
-  verifySessionCookieValue,
-} from "./auth";
-
-export async function getCurrentSession() {
-  const cookieStore = await cookies();
-  const cookie = cookieStore.get(authCookieName);
-
-  if (!cookie) {
-    return null;
-  }
-
-  const payload = verifySessionCookieValue(cookie.value);
-  return payload;
-}
-
-export async function setAuthenticatedSession() {
-  const cookieStore = await cookies();
-
-  cookieStore.set(
-    authCookieName,
-    createSessionCookieValue(),
-    sessionCookieOptions(getSessionCookieMaxAgeSeconds()),
-  );
-}
-
-export async function clearAuthenticatedSession() {
-  const cookieStore = await cookies();
-  cookieStore.set(authCookieName, "", clearSessionCookieOptions());
 }

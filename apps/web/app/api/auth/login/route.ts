@@ -1,50 +1,30 @@
 import { sharedEnv } from "@skill-builder/shared";
 import { NextResponse } from "next/server";
+import { z } from "zod";
 
-import { badRequest, jsonError, parseJsonBody } from "../../../../lib/api";
+import { badRequest, parseJsonBody, unauthorized } from "../../../../lib/api";
 import { createSessionCookie, verifyPassword } from "../../../../lib/auth";
 
-const loginInputSchema = {
-  safeParse(value: unknown) {
-    const parsed = value as { password?: string; redirectTo?: string } | null;
-
-    if (!parsed?.password || typeof parsed.password !== "string") {
-      return {
-        success: false as const,
-        error: {
-          issues: [{ path: ["password"], message: "Password is required." }],
-        },
-      };
-    }
-
-    return {
-      success: true as const,
-      data: {
-        password: parsed.password,
-        redirectTo:
-          typeof parsed.redirectTo === "string" && parsed.redirectTo.startsWith("/")
-            ? parsed.redirectTo
-            : "/",
-      },
-    };
-  },
-};
+const loginInputSchema = z.object({
+  password: z.string().min(1),
+  redirectTo: z.string().startsWith("/").optional(),
+});
 
 export async function POST(request: Request) {
   const parsed = await parseJsonBody(request, loginInputSchema);
 
   if (!parsed.success) {
-    return badRequest("INVALID_LOGIN_INPUT", parsed.error);
+    return badRequest("INVALID_LOGIN_INPUT", parsed.error.flatten());
   }
 
-  if (!verifyPassword(parsed.data.password)) {
-    return jsonError("INVALID_CREDENTIALS", "Incorrect local password.", 401);
+  if (!(await verifyPassword(parsed.data.password))) {
+    return unauthorized("INVALID_CREDENTIALS");
   }
 
   const response = NextResponse.json({
     ok: true,
     user: sharedEnv.APP_LOCAL_USER ?? "local-admin",
-    redirectTo: parsed.data.redirectTo,
+    redirectTo: parsed.data.redirectTo ?? "/projects",
   });
 
   response.cookies.set(createSessionCookie());

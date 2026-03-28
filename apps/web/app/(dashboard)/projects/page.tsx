@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { db, listProjects } from "@skill-builder/db";
+import { listProjects } from "@skill-builder/db";
+
+import { db } from "../../../../packages/db/src/client";
 
 export default async function ProjectsPage() {
   const projects = await listProjects(db);

@@ -1,13 +1,13 @@
 import { redirect } from "next/navigation";
 
-import { getSessionFromCookies } from "../../lib/auth";
+import { getCurrentSession } from "../../lib/session";
 import { LoginForm } from "./login-form";
 
 export default async function LoginPage() {
-  const session = await getSessionFromCookies();
+  const session = await getCurrentSession();
 
   if (session) {
-    redirect("/");
+    redirect("/projects");
   }
 
   return (

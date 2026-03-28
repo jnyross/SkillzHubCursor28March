@@ -1,14 +1,9 @@
 import { NextResponse } from "next/server";
-import { getProjectById, updateProject, db } from "@skill-builder/db";
+import { db, getProjectById, updateProject } from "@skill-builder/db";
 import { projectRecordSchema, updateProjectInputSchema } from "@skill-builder/shared";
 
-import {
-  badRequest,
-  notFound,
-  parseJsonBody,
-  unauthorized,
-} from "../../../../lib/api";
-import { getSessionFromCookies } from "../../../../lib/session";
+import { badRequest, notFound, parseJsonBody, unauthorized } from "../../../../lib/api";
+import { getCurrentSession } from "../../../../lib/session";
 
 type RouteContext = {
   params: Promise<{
@@ -17,7 +12,7 @@ type RouteContext = {
 };
 
 export async function GET(_request: Request, context: RouteContext) {
-  const session = await getSessionFromCookies();
+  const session = await getCurrentSession();
   if (!session) {
     return unauthorized();
   }
@@ -36,31 +31,29 @@ export async function GET(_request: Request, context: RouteContext) {
 }
 
 export async function PATCH(request: Request, context: RouteContext) {
-  const session = await getSessionFromCookies();
+  const session = await getCurrentSession();
   if (!session) {
     return unauthorized();
   }
 
-  const body = await parseJsonBody(request);
-  const parsed = updateProjectInputSchema.safeParse(body);
-
-  if (!parsed.success) {
-    return badRequest("INVALID_PROJECT_UPDATE", parsed.error.flatten());
-  }
-
-  const { projectId } = await context.params;
-
   try {
-    const project = await updateProject(db, projectId, parsed.data);
+    const parsed = await parseJsonBody(request, updateProjectInputSchema);
+    const { projectId } = await context.params;
+    const project = await updateProject(db, projectId, parsed);
+
     return NextResponse.json({
       ok: true,
       project: projectRecordSchema.parse(project),
     });
   } catch (error) {
+    if (error instanceof Error && error.message === "INVALID_JSON") {
+      return badRequest("INVALID_JSON");
+    }
+
     if (error instanceof Error && error.message.includes("does not exist")) {
       return notFound("PROJECT_NOT_FOUND", error.message);
     }
 
-    throw error;
+    return badRequest("INVALID_PROJECT_UPDATE", error);
   }
 }

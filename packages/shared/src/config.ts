@@ -13,6 +13,7 @@ export const sharedEnv = createEnv({
     APP_SESSION_SECRET: z.string().min(16).optional(),
     APP_LOCAL_USER: z.string().min(1).optional(),
     APP_LOCAL_PASSWORD: z.string().min(1).optional(),
+    APP_LOCAL_PASSWORD_SHA256: z.string().length(64).optional(),
     LOG_LEVEL: z.string().min(1).optional(),
   },
   runtimeEnv: process.env,

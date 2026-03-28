@@ -1,7 +1,8 @@
 "use client";
 
+import type { FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 type LoginState = {
   error: string | null;

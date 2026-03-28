@@ -5,8 +5,8 @@ import { approveProjectBrief, db } from "@skill-builder/db";
 import {
   jsonError,
   parseJsonBody,
-  requireAuthenticatedSession,
 } from "../../../../../../lib/api";
+import { requireAuthenticatedSession } from "../../../../../../lib/auth";
 
 type RouteContext = {
   params: Promise<{
@@ -21,7 +21,9 @@ export async function POST(request: Request, context: RouteContext) {
   }
 
   const { projectId } = await context.params;
-  const body = await parseJsonBody<{ briefApprovedAt?: string }>(request);
+  const body = (await parseJsonBody<{ briefApprovedAt?: string }>(request).catch(() => ({}))) as {
+    briefApprovedAt?: string;
+  };
 
   try {
     const project = await approveProjectBrief(
@@ -33,9 +35,13 @@ export async function POST(request: Request, context: RouteContext) {
     return NextResponse.json({
       ok: true,
       project,
-      approvedBy: session.user,
+      approvedBy: session.session.user,
     });
   } catch (error) {
-    return jsonError(error);
+    if (error instanceof Error && error.message.includes("does not exist")) {
+      return jsonError("PROJECT_NOT_FOUND", error.message, 404);
+    }
+
+    return jsonError("INTERNAL_ERROR", "Unexpected server error.", 500);
   }
 }

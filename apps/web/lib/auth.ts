@@ -8,14 +8,14 @@ export const authCookieName = "skill_builder_session";
 export const SESSION_COOKIE_NAME = authCookieName;
 
 const SESSION_COOKIE_PATH = "/";
-const DEFAULT_SESSION_VALUE = "local-authenticated";
+const DEFAULT_SESSION_MARKER = "local-authenticated";
 const DEFAULT_USER = "local-admin";
 
 export interface AuthSession {
   user: string;
 }
 
-type AuthGuardResult =
+export type AuthGuardResult =
   | {
       ok: true;
       session: AuthSession;
@@ -34,11 +34,6 @@ export function getExpectedLocalUser() {
 }
 
 function getConfiguredPasswordHash() {
-  const explicitHash = sharedEnv.APP_LOCAL_PASSWORD_SHA256?.trim();
-  if (explicitHash) {
-    return explicitHash;
-  }
-
   const rawPassword = sharedEnv.APP_LOCAL_PASSWORD?.trim();
   if (!rawPassword) {
     return null;
@@ -79,8 +74,9 @@ export function getSessionCookieMaxAgeSeconds() {
 }
 
 export function createSessionCookieValue(user = getExpectedLocalUser()) {
-  const payload = `${DEFAULT_SESSION_VALUE}:${user}`;
-  return `${payload}:${sha256(`${payload}:${getSessionSecret()}`).slice(0, 32)}`;
+  const payload = `${DEFAULT_SESSION_MARKER}:${user}`;
+  const signature = sha256(`${payload}:${getSessionSecret()}`).slice(0, 32);
+  return `${payload}:${signature}`;
 }
 
 export function verifySessionCookieValue(value: string | undefined): AuthSession | null {
@@ -95,7 +91,6 @@ export function verifySessionCookieValue(value: string | undefined): AuthSession
 
   const payload = `${marker}:${user}`;
   const expectedSignature = sha256(`${payload}:${getSessionSecret()}`).slice(0, 32);
-
   const expectedBuffer = Buffer.from(expectedSignature);
   const actualBuffer = Buffer.from(signature);
 
@@ -107,22 +102,18 @@ export function verifySessionCookieValue(value: string | undefined): AuthSession
     return null;
   }
 
-  if (marker !== DEFAULT_SESSION_VALUE) {
+  if (marker !== DEFAULT_SESSION_MARKER) {
     return null;
   }
 
   return { user };
 }
 
-export function getSessionCookieValue() {
-  return createSessionCookieValue();
-}
-
 export function isAuthenticatedSessionCookie(value: string | undefined) {
   return Boolean(verifySessionCookieValue(value));
 }
 
-export async function hasValidSessionCookie(value: string | undefined) {
+export function hasValidSessionCookie(value: string | undefined) {
   return isAuthenticatedSessionCookie(value);
 }
 
@@ -160,15 +151,6 @@ export async function getSessionFromCookieStore(): Promise<AuthSession | null> {
   return getSessionFromCookies();
 }
 
-export async function getCurrentSession(): Promise<AuthSession> {
-  const session = await getSessionFromCookies();
-  if (!session) {
-    throw new Error("UNAUTHORIZED");
-  }
-
-  return session;
-}
-
 export async function requireAuthenticatedSession(): Promise<AuthGuardResult> {
   const session = await getSessionFromCookies();
 
@@ -192,32 +174,17 @@ export async function requireAuthenticatedSession(): Promise<AuthGuardResult> {
 }
 
 export async function requireAuthenticatedRequest() {
-  const session = await getSessionFromCookies();
-  if (!session) {
-    throw new Error("UNAUTHORIZED");
-  }
-
-  return session;
-}
-
-export function createSessionCookieHeader(user = getExpectedLocalUser()) {
-  return createSessionCookie(user);
+  return requireAuthenticatedSession();
 }
 
 export function isPublicPath(pathname: string) {
   return (
+    pathname === "/" ||
     pathname === "/login" ||
     pathname === "/api/auth/login" ||
+    pathname === "/api/auth/logout" ||
     pathname === "/api/auth/session" ||
     pathname === "/api/health" ||
     pathname === "/api/claude/preflight"
   );
-}
-
-export function isProtectedPath(pathname: string) {
-  if (pathname === "/") {
-    return false;
-  }
-
-  return pathname.startsWith("/projects") || pathname.startsWith("/api/projects");
 }

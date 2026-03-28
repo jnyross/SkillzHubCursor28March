@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { ZodError, type ZodType } from "zod";
 
+import { getCurrentSession, requireAuthenticatedSession } from "./auth";
+
 export function jsonOk<T>(data: T, init?: ResponseInit) {
   return NextResponse.json(
     {
@@ -66,3 +68,5 @@ export async function parseJsonBody<T>(
 
   return schema.parse(body);
 }
+
+export { getCurrentSession, requireAuthenticatedSession };

@@ -1,5 +1,5 @@
 import styles from "./page.module.css";
-import { getSessionUser } from "../lib/auth";
+import { getCurrentSession } from "../lib/session";
 
 const commands = [
   "cp .env.example .env",
@@ -18,7 +18,7 @@ const checklist = [
 ];
 
 export default async function Home() {
-  const session = await getSessionUser();
+  const session = await getCurrentSession();
   return (
     <div className={styles.page}>
       <main className={styles.main}>
@@ -39,7 +39,7 @@ export default async function Home() {
             <li>Shared, db, and ui workspace packages are scaffolded.</li>
             <li>Both Docker Compose and host-mode Postgres/MinIO startup paths are documented.</li>
             <li>
-              Auth status: {session ? `signed in as ${session.username}` : "not signed in"}
+              Auth status: {session ? `signed in as ${session.user}` : "not signed in"}
             </li>
           </ul>
         </section>
