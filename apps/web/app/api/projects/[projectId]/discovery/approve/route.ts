@@ -2,11 +2,9 @@ import { NextResponse } from "next/server";
 
 import { approveProjectBrief, db } from "@skill-builder/db";
 
-import {
-  jsonError,
-  parseJsonBody,
-} from "../../../../../../lib/api";
+import { jsonError, parseJsonBody } from "../../../../../../lib/api";
 import { requireAuthenticatedSession } from "../../../../../../lib/auth";
+import { z } from "zod";
 
 type RouteContext = {
   params: Promise<{
@@ -21,16 +19,20 @@ export async function POST(request: Request, context: RouteContext) {
   }
 
   const { projectId } = await context.params;
-  const body = (await parseJsonBody<{ briefApprovedAt?: string }>(request).catch(() => ({}))) as {
-    briefApprovedAt?: string;
-  };
+  const parsed = await parseJsonBody(
+    request,
+    z.object({
+      briefApprovedAt: z.string().datetime().optional(),
+    }),
+  );
+
+  const briefApprovedAt =
+    parsed.success && parsed.data.briefApprovedAt
+      ? new Date(parsed.data.briefApprovedAt)
+      : undefined;
 
   try {
-    const project = await approveProjectBrief(
-      db,
-      projectId,
-      body?.briefApprovedAt ? new Date(body.briefApprovedAt) : undefined,
-    );
+    const project = await approveProjectBrief(db, projectId, briefApprovedAt);
 
     return NextResponse.json({
       ok: true,

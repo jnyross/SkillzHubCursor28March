@@ -35,11 +35,13 @@ export async function POST(request: Request) {
     return parsed.response;
   }
 
+  const input = parsed.data as import("@skill-builder/shared").CreateProjectInput;
+
   const project = await createProject(db, {
-    name: parsed.data.name,
-    slug: parsed.data.slug,
+    name: input.name,
+    slug: input.slug,
     ownerUserId: session.user,
-    briefJson: parsed.data.brief ?? null,
+    briefJson: input.brief ?? null,
   });
 
   return NextResponse.json(

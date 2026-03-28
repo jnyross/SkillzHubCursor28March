@@ -36,20 +36,21 @@ export async function PATCH(request: Request, context: RouteContext) {
     return unauthorized();
   }
 
+  const parsed = await parseJsonBody(request, updateProjectInputSchema);
+  if (!parsed.success) {
+    return parsed.response;
+  }
+
+  const { projectId } = await context.params;
+
   try {
-    const parsed = await parseJsonBody(request, updateProjectInputSchema);
-    const { projectId } = await context.params;
-    const project = await updateProject(db, projectId, parsed);
+    const project = await updateProject(db, projectId, parsed.data);
 
     return NextResponse.json({
       ok: true,
       project: projectRecordSchema.parse(project),
     });
   } catch (error) {
-    if (error instanceof Error && error.message === "INVALID_JSON") {
-      return badRequest("INVALID_JSON");
-    }
-
     if (error instanceof Error && error.message.includes("does not exist")) {
       return notFound("PROJECT_NOT_FOUND", error.message);
     }

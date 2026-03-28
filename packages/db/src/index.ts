@@ -1,6 +1,7 @@
 export * from "./client";
 export * from "./repositories";
 export * from "./schema";
+export type { DatabaseSchema } from "./schema";
 
 export type DatabaseHealth = {
   status: "ready";

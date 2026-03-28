@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { db, getProjectById, updateProject } from "@skill-builder/db";
 import { projectBriefSchema, projectRecordSchema } from "@skill-builder/shared";
 
-import { badRequest, parseJsonBody, notFound, unauthorized, serverError } from "../../../../../lib/api";
+import { notFound, parseJsonBody, unauthorized, serverError } from "../../../../../lib/api";
 import { getCurrentSession } from "../../../../../lib/session";
 
 interface DiscoveryRouteContext {
@@ -19,6 +19,9 @@ export async function PATCH(request: Request, context: DiscoveryRouteContext) {
   }
 
   const brief = await parseJsonBody(request, projectBriefSchema);
+  if (!brief.success) {
+    return brief.response;
+  }
 
   const { projectId } = await context.params;
   const project = await getProjectById(db, projectId);
@@ -29,7 +32,7 @@ export async function PATCH(request: Request, context: DiscoveryRouteContext) {
 
   try {
     const updated = await updateProject(db, projectId, {
-      briefJson: brief,
+      briefJson: brief.data,
       briefApprovedAt: null,
     });
 

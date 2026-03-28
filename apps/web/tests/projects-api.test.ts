@@ -27,6 +27,7 @@ vi.mock("../lib/auth", () => ({
 
 vi.mock("../lib/session", () => ({
   getSessionFromCookies: (...args: unknown[]) => getSessionFromCookies(...args),
+  getCurrentSession: (...args: unknown[]) => getSessionFromCookies(...args),
 }));
 
 describe("project api routes", () => {

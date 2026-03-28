@@ -60,11 +60,7 @@ export function serverError(error: unknown) {
 export async function parseJsonBody<T>(
   request: Request,
   schema?: ZodType<T>,
-): Promise<
-  | { success: true; data: T }
-  | { success: true; data: unknown }
-  | { success: false; response: NextResponse }
-> {
+): Promise<{ success: true; data: T | unknown } | { success: false; response: NextResponse }> {
   const body = await request.json().catch(() => null);
 
   if (body === null) {
@@ -98,4 +94,10 @@ export async function parseJsonBody<T>(
 
 export async function requireAuthenticatedRequest(): Promise<AuthGuardResult> {
   return requireAuthenticatedSession();
+}
+
+export function unwrapParsedBody<T>(
+  parsed: { success: true; data: T | unknown } | { success: false; response: NextResponse },
+): parsed is { success: true; data: T } {
+  return parsed.success;
 }
