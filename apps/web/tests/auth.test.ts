@@ -1,9 +1,22 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { createSessionCookie, verifyPassword } from "../lib/auth";
+vi.mock("../lib/auth", async () => {
+  const actual = await vi.importActual<typeof import("../lib/auth")>("../lib/auth");
+
+  return {
+    ...actual,
+    getSessionFromCookieStore: vi.fn(async () => null),
+  };
+});
+
+import { createSessionCookie, getSessionFromCookieStore, verifyPassword } from "../lib/auth";
 import { GET as getSession } from "../app/api/auth/session/route";
 
 describe("auth helpers", () => {
+  beforeEach(() => {
+    vi.mocked(getSessionFromCookieStore).mockResolvedValue(null);
+  });
+
   it("accepts the configured local password", async () => {
     process.env.APP_LOCAL_PASSWORD = "secret-pass";
 

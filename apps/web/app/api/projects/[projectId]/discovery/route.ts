@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 
-import { db } from "@skill-builder/db";
-import { projectBriefSchema, updateProjectInputSchema } from "@skill-builder/shared";
+import { db, getProjectById, updateProject } from "@skill-builder/db";
+import { projectBriefSchema } from "@skill-builder/shared";
 
-import { badRequest, notFound } from "../../../../../lib/api";
-import { getSessionFromCookieStore } from "../../../../../lib/auth";
+import { badRequest, serverError } from "../../../../../lib/api";
+import { requireAuthenticatedSession } from "../../../../../lib/auth";
 
 interface DiscoveryRouteContext {
   params: Promise<{
@@ -13,29 +13,42 @@ interface DiscoveryRouteContext {
 }
 
 export async function PATCH(request: Request, context: DiscoveryRouteContext) {
-  const session = await getSessionFromCookieStore();
-  if (!session) {
-    return NextResponse.json({ ok: false, error: "UNAUTHORIZED" }, { status: 401 });
+  const session = await requireAuthenticatedSession();
+  if (!session.ok) {
+    return session.response;
   }
 
   const body = await request.json().catch(() => null);
-  const parsed = updateProjectInputSchema.pick({ brief: true }).safeParse(body);
+  const parsed = projectBriefSchema.safeParse(body);
 
-  if (!parsed.success || !parsed.data.brief) {
-    return badRequest("Brief payload is invalid.");
+  if (!parsed.success) {
+    return badRequest("INVALID_PROJECT_BRIEF", parsed.error.flatten());
   }
 
   const { projectId } = await context.params;
+  const project = await getProjectById(db, projectId);
 
-  const [project] = await db
-    .update(db._.fullSchema.projects)
-    .set({
-      briefJson: projectBriefSchema.parse(parsed.data.brief),
-      updatedAt: new Date(),
-    })
-    .where(db._.dialect.sqlToQuery ? undefined : undefined);
+  if (!project) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "PROJECT_NOT_FOUND",
+      },
+      { status: 404 },
+    );
+  }
 
-  void project;
+  try {
+    const updated = await updateProject(db, projectId, {
+      briefJson: parsed.data,
+      briefApprovedAt: null,
+    });
 
-  return notFound("Project discovery update will be implemented with typed repository support next.");
+    return NextResponse.json({
+      ok: true,
+      project: updated,
+    });
+  } catch (error) {
+    return serverError(error);
+  }
 }

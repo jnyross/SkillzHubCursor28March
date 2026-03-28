@@ -1,56 +1,44 @@
 import { NextResponse } from "next/server";
 
 import { createProjectInputSchema, projectRecordSchema } from "@skill-builder/shared";
-import { db, createProject, getLatestProject } from "@skill-builder/db";
+import { createProject, db, getLatestProject, listProjects } from "@skill-builder/db";
 
-import {
-  getSessionFromCookieStore,
-  requireAuthenticatedRequest,
-} from "../../../lib/auth";
-import { parseJsonBody } from "../../../lib/api";
+import { jsonError, parseJsonBody } from "../../../lib/api";
+import { requireAuthenticatedRequest } from "../../../lib/auth";
 
 export async function GET() {
-  await requireAuthenticatedRequest();
+  const session = await requireAuthenticatedRequest();
+  if (!session.ok) {
+    return session.response;
+  }
 
-  const latestProject = await getLatestProject(db);
+  const [latestProject, projects] = await Promise.all([
+    getLatestProject(db),
+    listProjects(db),
+  ]);
 
   return NextResponse.json({
     ok: true,
-    project: latestProject ? projectRecordSchema.parse(latestProject) : null,
+    latestProject: latestProject ? projectRecordSchema.parse(latestProject) : null,
+    projects: projects.map((project) => projectRecordSchema.parse(project)),
   });
 }
 
 export async function POST(request: Request) {
-  const session = await getSessionFromCookieStore();
-
-  if (!session) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: "UNAUTHORIZED",
-      },
-      { status: 401 },
-    );
+  const session = await requireAuthenticatedRequest();
+  if (!session.ok) {
+    return session.response;
   }
 
-  const body = await parseJsonBody(request);
-  const parsed = createProjectInputSchema.safeParse(body);
-
+  const parsed = await parseJsonBody(request, createProjectInputSchema);
   if (!parsed.success) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: "INVALID_PROJECT_INPUT",
-        issues: parsed.error.issues,
-      },
-      { status: 400 },
-    );
+    return jsonError("INVALID_PROJECT_INPUT", "Project payload is invalid.", 400, parsed.error);
   }
 
   const project = await createProject(db, {
     name: parsed.data.name,
     slug: parsed.data.slug,
-    ownerUserId: session.user,
+    ownerUserId: session.session.user,
     briefJson: parsed.data.brief ?? null,
   });
 

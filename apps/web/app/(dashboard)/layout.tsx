@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 
-import { getCurrentSession } from "../../lib/auth";
+import { redirect } from "next/navigation";
+
+import { getCurrentSession } from "../../lib/session";
 
 export default async function DashboardLayout({
   children,
@@ -8,6 +10,10 @@ export default async function DashboardLayout({
   children: ReactNode;
 }>) {
   const session = await getCurrentSession();
+
+  if (!session) {
+    redirect("/login?redirect=%2Fprojects");
+  }
 
   return (
     <div

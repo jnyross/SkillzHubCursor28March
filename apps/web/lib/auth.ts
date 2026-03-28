@@ -1,17 +1,36 @@
 import { createHash, timingSafeEqual } from "node:crypto";
+import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 
 import { sharedEnv } from "@skill-builder/shared";
 
-export const SESSION_COOKIE_NAME = "skill_builder_session";
+export const authCookieName = "skill_builder_session";
+export const SESSION_COOKIE_NAME = authCookieName;
 
+const SESSION_COOKIE_PATH = "/";
 const DEFAULT_SESSION_VALUE = "local-authenticated";
+const DEFAULT_USER = "local-admin";
+
+export interface AuthSession {
+  user: string;
+}
+
+type AuthGuardResult =
+  | {
+      ok: true;
+      session: AuthSession;
+    }
+  | {
+      ok: false;
+      response: NextResponse;
+    };
 
 function sha256(value: string) {
   return createHash("sha256").update(value).digest("hex");
 }
 
 export function getExpectedLocalUser() {
-  return sharedEnv.APP_LOCAL_USER ?? "local-admin";
+  return sharedEnv.APP_LOCAL_USER ?? DEFAULT_USER;
 }
 
 function getConfiguredPasswordHash() {
@@ -32,7 +51,7 @@ export function isPasswordConfigured() {
   return Boolean(getConfiguredPasswordHash());
 }
 
-export function verifyLocalPassword(password: string) {
+export async function verifyPassword(password: string) {
   const expectedHash = getConfiguredPasswordHash();
   if (!expectedHash) {
     return false;
@@ -49,11 +68,156 @@ export function verifyLocalPassword(password: string) {
   return timingSafeEqual(expectedBuffer, providedBuffer);
 }
 
+export const verifyLocalPassword = verifyPassword;
+
+function getSessionSecret() {
+  return sharedEnv.APP_SESSION_SECRET ?? "development-session-secret";
+}
+
+export function getSessionCookieMaxAgeSeconds() {
+  return 60 * 60 * 12;
+}
+
+export function createSessionCookieValue(user = getExpectedLocalUser()) {
+  const payload = `${DEFAULT_SESSION_VALUE}:${user}`;
+  return `${payload}:${sha256(`${payload}:${getSessionSecret()}`).slice(0, 32)}`;
+}
+
+export function verifySessionCookieValue(value: string | undefined): AuthSession | null {
+  if (!value) {
+    return null;
+  }
+
+  const [marker, user, signature] = value.split(":");
+  if (!marker || !user || !signature) {
+    return null;
+  }
+
+  const payload = `${marker}:${user}`;
+  const expectedSignature = sha256(`${payload}:${getSessionSecret()}`).slice(0, 32);
+
+  const expectedBuffer = Buffer.from(expectedSignature);
+  const actualBuffer = Buffer.from(signature);
+
+  if (expectedBuffer.length !== actualBuffer.length) {
+    return null;
+  }
+
+  if (!timingSafeEqual(expectedBuffer, actualBuffer)) {
+    return null;
+  }
+
+  if (marker !== DEFAULT_SESSION_VALUE) {
+    return null;
+  }
+
+  return { user };
+}
+
 export function getSessionCookieValue() {
-  const secret = sharedEnv.APP_SESSION_SECRET ?? "development-session-secret";
-  return `${DEFAULT_SESSION_VALUE}:${sha256(secret).slice(0, 16)}`;
+  return createSessionCookieValue();
 }
 
 export function isAuthenticatedSessionCookie(value: string | undefined) {
-  return value === getSessionCookieValue();
+  return Boolean(verifySessionCookieValue(value));
+}
+
+export async function hasValidSessionCookie(value: string | undefined) {
+  return isAuthenticatedSessionCookie(value);
+}
+
+export function sessionCookieOptions(maxAge = getSessionCookieMaxAgeSeconds()) {
+  return {
+    path: SESSION_COOKIE_PATH,
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure: false,
+    maxAge,
+  };
+}
+
+export function clearSessionCookieOptions() {
+  return {
+    ...sessionCookieOptions(0),
+    expires: new Date(0),
+  };
+}
+
+export function createSessionCookie(user = getExpectedLocalUser()) {
+  return {
+    name: authCookieName,
+    value: createSessionCookieValue(user),
+    ...sessionCookieOptions(),
+  };
+}
+
+export async function getSessionFromCookies(): Promise<AuthSession | null> {
+  const cookieStore = await cookies();
+  return verifySessionCookieValue(cookieStore.get(authCookieName)?.value);
+}
+
+export async function getSessionFromCookieStore(): Promise<AuthSession | null> {
+  return getSessionFromCookies();
+}
+
+export async function getCurrentSession(): Promise<AuthSession> {
+  const session = await getSessionFromCookies();
+  if (!session) {
+    throw new Error("UNAUTHORIZED");
+  }
+
+  return session;
+}
+
+export async function requireAuthenticatedSession(): Promise<AuthGuardResult> {
+  const session = await getSessionFromCookies();
+
+  if (!session) {
+    return {
+      ok: false,
+      response: NextResponse.json(
+        {
+          ok: false,
+          error: "UNAUTHORIZED",
+        },
+        { status: 401 },
+      ),
+    };
+  }
+
+  return {
+    ok: true,
+    session,
+  };
+}
+
+export async function requireAuthenticatedRequest() {
+  const session = await getSessionFromCookies();
+  if (!session) {
+    throw new Error("UNAUTHORIZED");
+  }
+
+  return session;
+}
+
+export function createSessionCookieHeader(user = getExpectedLocalUser()) {
+  return createSessionCookie(user);
+}
+
+export function isPublicPath(pathname: string) {
+  return (
+    pathname === "/login" ||
+    pathname === "/api/auth/login" ||
+    pathname === "/api/auth/session" ||
+    pathname === "/api/health" ||
+    pathname === "/api/claude/preflight"
+  );
+}
+
+export function isProtectedPath(pathname: string) {
+  if (pathname === "/") {
+    return false;
+  }
+
+  return pathname.startsWith("/projects") || pathname.startsWith("/api/projects");
 }

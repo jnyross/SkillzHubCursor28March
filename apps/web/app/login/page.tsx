@@ -32,7 +32,8 @@ export default async function LoginPage() {
       >
         <h1 style={{ margin: 0, fontSize: "1.5rem" }}>Local sign in</h1>
         <p style={{ margin: 0, color: "#a3b1c2", lineHeight: 1.6 }}>
-          Sign in with the single-user password configured in the local environment.
+          Sign in with the single-user password configured in the local
+          environment.
         </p>
         <LoginForm />
       </div>

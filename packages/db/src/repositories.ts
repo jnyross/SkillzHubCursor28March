@@ -255,40 +255,6 @@ export async function updateProject(
   return project;
 }
 
-export async function getProjectById(
-  db: Database,
-  projectId: string,
-): Promise<ProjectRecord | null> {
-  const [project] = await db
-    .select()
-    .from(projects)
-    .where(eq(projects.id, projectId))
-    .limit(1);
-
-  return project ?? null;
-}
-
-export async function updateProject(
-  db: Database,
-  projectId: string,
-  input: Partial<Pick<ProjectRecord, "name" | "slug" | "briefJson">>,
-): Promise<ProjectRecord> {
-  const [updated] = await db
-    .update(projects)
-    .set({
-      ...input,
-      updatedAt: new Date(),
-    })
-    .where(eq(projects.id, projectId))
-    .returning();
-
-  if (!updated) {
-    throw new DomainError(`Project ${projectId} does not exist.`, "PROJECT_NOT_FOUND");
-  }
-
-  return updated;
-}
-
 export async function approveProjectBrief(
   db: Database,
   projectId: string,
@@ -330,46 +296,6 @@ export async function createAuditEvent(
       ${JSON.stringify(input.payloadJson ?? {})}::jsonb
     )
   `);
-}
-
-export async function getProjectById(
-  db: Database,
-  projectId: string,
-): Promise<ProjectRecord | null> {
-  const [project] = await db
-    .select()
-    .from(projects)
-    .where(eq(projects.id, projectId))
-    .limit(1);
-
-  return project ?? null;
-}
-
-export async function updateProject(
-  db: Database,
-  projectId: string,
-  input: {
-    name?: string;
-    slug?: string;
-    briefJson?: Record<string, unknown> | null;
-    briefApprovedAt?: Date | null;
-    status?: ProjectRecord["status"];
-  },
-): Promise<ProjectRecord> {
-  const [updated] = await db
-    .update(projects)
-    .set({
-      ...input,
-      updatedAt: new Date(),
-    })
-    .where(eq(projects.id, projectId))
-    .returning();
-
-  if (!updated) {
-    throw new DomainError(`Project ${projectId} does not exist.`, "PROJECT_NOT_FOUND");
-  }
-
-  return updated;
 }
 
 export async function ensureProjectExists(

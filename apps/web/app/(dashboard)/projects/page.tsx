@@ -1,9 +1,8 @@
 import Link from "next/link";
-import { db } from "@skill-builder/db";
-import { getLatestProject } from "@skill-builder/db";
+import { db, listProjects } from "@skill-builder/db";
 
 export default async function ProjectsPage() {
-  const latestProject = await getLatestProject(db);
+  const projects = await listProjects(db);
   return (
     <main style={{ display: "grid", gap: "1rem" }}>
       <h1 style={{ margin: 0, fontSize: "2rem" }}>Projects</h1>
@@ -14,20 +13,34 @@ export default async function ProjectsPage() {
       <section
         style={{
           display: "grid",
-          gap: "0.5rem",
+          gap: "0.75rem",
           padding: "1rem",
           borderRadius: "1rem",
           border: "1px solid rgba(148,163,184,0.18)",
           background: "rgba(15,23,42,0.72)",
         }}
       >
-        <h2 style={{ margin: 0, fontSize: "1.125rem" }}>Latest project</h2>
-        {latestProject ? (
-          <>
-            <strong>{latestProject.name}</strong>
-            <span style={{ color: "#94a3b8" }}>/{latestProject.slug}</span>
-            <span style={{ color: "#cbd5e1" }}>Status: {latestProject.status}</span>
-          </>
+        <h2 style={{ margin: 0, fontSize: "1.125rem" }}>Projects</h2>
+        {projects.length ? (
+          <div style={{ display: "grid", gap: "0.75rem" }}>
+            {projects.map((project) => (
+              <article
+                key={project.id}
+                style={{
+                  display: "grid",
+                  gap: "0.35rem",
+                  borderRadius: "0.85rem",
+                  padding: "0.9rem 1rem",
+                  border: "1px solid rgba(148,163,184,0.14)",
+                  background: "rgba(2,6,23,0.46)",
+                }}
+              >
+                <strong>{project.name}</strong>
+                <span style={{ color: "#94a3b8" }}>/{project.slug}</span>
+                <span style={{ color: "#cbd5e1" }}>Status: {project.status}</span>
+              </article>
+            ))}
+          </div>
         ) : (
           <span style={{ color: "#94a3b8" }}>
             No projects created yet. Use the API to create your first project.

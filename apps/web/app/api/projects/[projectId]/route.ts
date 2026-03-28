@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
-import {
-  createProjectInputSchema,
-  projectBriefSchema,
-  updateProjectInputSchema,
-} from "@skill-builder/shared";
-import { db, getProjectById, updateProject } from "@skill-builder/db";
+import { getProjectById, updateProject, db } from "@skill-builder/db";
+import { projectRecordSchema, updateProjectInputSchema } from "@skill-builder/shared";
 
-import { badRequest, serverError } from "../../../../lib/api";
-import { requireAuthenticatedSession } from "../../../../lib/auth";
+import {
+  badRequest,
+  notFound,
+  parseJsonBody,
+  unauthorized,
+} from "../../../../lib/api";
+import { getSessionFromCookies } from "../../../../lib/session";
 
 type RouteContext = {
   params: Promise<{
@@ -16,37 +17,31 @@ type RouteContext = {
 };
 
 export async function GET(_request: Request, context: RouteContext) {
-  const session = await requireAuthenticatedSession();
-  if (!session.ok) {
-    return session.response;
+  const session = await getSessionFromCookies();
+  if (!session) {
+    return unauthorized();
   }
 
   const { projectId } = await context.params;
   const project = await getProjectById(db, projectId);
 
   if (!project) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: "PROJECT_NOT_FOUND",
-      },
-      { status: 404 },
-    );
+    return notFound("PROJECT_NOT_FOUND", "Project not found.");
   }
 
   return NextResponse.json({
     ok: true,
-    project,
+    project: projectRecordSchema.parse(project),
   });
 }
 
 export async function PATCH(request: Request, context: RouteContext) {
-  const session = await requireAuthenticatedSession();
-  if (!session.ok) {
-    return session.response;
+  const session = await getSessionFromCookies();
+  if (!session) {
+    return unauthorized();
   }
 
-  const body = (await request.json().catch(() => null)) as unknown;
+  const body = await parseJsonBody(request);
   const parsed = updateProjectInputSchema.safeParse(body);
 
   if (!parsed.success) {
@@ -59,9 +54,13 @@ export async function PATCH(request: Request, context: RouteContext) {
     const project = await updateProject(db, projectId, parsed.data);
     return NextResponse.json({
       ok: true,
-      project,
+      project: projectRecordSchema.parse(project),
     });
   } catch (error) {
-    return serverError(error);
+    if (error instanceof Error && error.message.includes("does not exist")) {
+      return notFound("PROJECT_NOT_FOUND", error.message);
+    }
+
+    throw error;
   }
 }

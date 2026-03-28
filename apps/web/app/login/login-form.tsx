@@ -12,7 +12,7 @@ export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = useMemo(
-    () => searchParams.get("redirect") || "/",
+    () => searchParams.get("redirectTo") || "/",
     [searchParams],
   );
 

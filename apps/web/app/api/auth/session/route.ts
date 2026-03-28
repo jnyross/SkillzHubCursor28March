@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 
-import { getSessionFromCookieStore } from "../../../../lib/auth";
+import { getCurrentSession } from "../../../../lib/session";
 
 export async function GET() {
-  const session = await getSessionFromCookieStore();
+  const session = await getCurrentSession();
 
   return NextResponse.json({
     ok: true,
