@@ -13,18 +13,14 @@ const loginInputSchema = z.object({
 export async function POST(request: Request) {
   const parsed = await parseJsonBody(request, loginInputSchema);
 
-  if (!parsed.success) {
-    return badRequest("INVALID_LOGIN_INPUT", parsed.error.flatten());
-  }
-
-  if (!(await verifyPassword(parsed.data.password))) {
+  if (!(await verifyPassword(parsed.password))) {
     return unauthorized("INVALID_CREDENTIALS");
   }
 
   const response = NextResponse.json({
     ok: true,
     user: sharedEnv.APP_LOCAL_USER ?? "local-admin",
-    redirectTo: parsed.data.redirectTo ?? "/projects",
+    redirectTo: parsed.redirectTo ?? "/projects",
   });
 
   response.cookies.set(createSessionCookie());

@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
 import { ZodError, type ZodType } from "zod";
 
-import { getCurrentSession, requireAuthenticatedSession } from "./auth";
+import { requireAuthenticatedSession, type AuthGuardResult } from "./auth";
 
-export function jsonOk<T>(data: T, init?: ResponseInit) {
+export function jsonOk<T extends Record<string, unknown>>(
+  data: T,
+  init?: ResponseInit,
+) {
   return NextResponse.json(
     {
       ok: true,
@@ -57,16 +60,42 @@ export function serverError(error: unknown) {
 export async function parseJsonBody<T>(
   request: Request,
   schema?: ZodType<T>,
-): Promise<T | unknown> {
-  const body = await request.json().catch(() => {
-    throw new Error("INVALID_JSON");
-  });
+): Promise<
+  | { success: true; data: T }
+  | { success: true; data: unknown }
+  | { success: false; response: NextResponse }
+> {
+  const body = await request.json().catch(() => null);
 
-  if (!schema) {
-    return body;
+  if (body === null) {
+    return {
+      success: false,
+      response: badRequest("INVALID_JSON"),
+    };
   }
 
-  return schema.parse(body);
+  if (!schema) {
+    return {
+      success: true,
+      data: body,
+    };
+  }
+
+  const parsed = schema.safeParse(body);
+
+  if (!parsed.success) {
+    return {
+      success: false,
+      response: badRequest("INVALID_PAYLOAD", parsed.error.flatten()),
+    };
+  }
+
+  return {
+    success: true,
+    data: parsed.data,
+  };
 }
 
-export { getCurrentSession, requireAuthenticatedSession };
+export async function requireAuthenticatedRequest(): Promise<AuthGuardResult> {
+  return requireAuthenticatedSession();
+}
