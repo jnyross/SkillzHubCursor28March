@@ -16,7 +16,7 @@ export function createBoss(config: WorkerConfig) {
   return new PgBoss({
     connectionString: config.databaseUrl,
     schema: config.queue.schema,
-    monitorStateIntervalSeconds: 0,
+    monitorIntervalSeconds: 0,
     newJobCheckIntervalSeconds: config.queue.newJobCheckIntervalSeconds,
   });
 }
