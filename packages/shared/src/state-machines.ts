@@ -5,6 +5,7 @@ import type {
   RunStatus,
   SkillVersionStatus,
 } from "./enums";
+import { InvalidTransitionError } from "./errors";
 
 type TransitionMap<TState extends string> = {
   readonly [K in TState]: readonly TState[];
@@ -20,7 +21,8 @@ export const SKILL_VERSION_TRANSITIONS = {
 
 export const EVAL_SET_TRANSITIONS = {
   draft: ["frozen"],
-  frozen: [],
+  frozen: ["retired"],
+  retired: [],
 } as const satisfies TransitionMap<EvalSetStatus>;
 
 export const ITERATION_TRANSITIONS = {
@@ -55,12 +57,30 @@ export function createTransitionValidator<TState extends string>(
     const allowed = transitions[from] ?? [];
 
     if (!allowed.includes(to)) {
-      throw new Error(`${entityName} cannot transition from ${from} to ${to}`);
+      throw new InvalidTransitionError(entityName, from, to);
     }
 
-    return true;
+    return {
+      from,
+      to,
+    } as const;
   };
 }
+
+export function assertAllowedTransition<TState extends string>(
+  entityName: string,
+  transitions: TransitionMap<TState>,
+  from: TState,
+  to: TState,
+) {
+  return createTransitionValidator(entityName, transitions)(from, to);
+}
+
+export const skillVersionTransitions = SKILL_VERSION_TRANSITIONS;
+export const evalSetTransitions = EVAL_SET_TRANSITIONS;
+export const iterationTransitions = ITERATION_TRANSITIONS;
+export const runTransitions = RUN_TRANSITIONS;
+export const comparablePairTransitions = COMPARABLE_PAIR_TRANSITIONS;
 
 export const transitionSkillVersion = createTransitionValidator(
   "SkillVersion",
@@ -83,3 +103,14 @@ export const transitionComparablePair = createTransitionValidator(
   "ComparablePair",
   COMPARABLE_PAIR_TRANSITIONS,
 );
+
+export function validateSkillVersionTransition(
+  from: SkillVersionStatus,
+  to: SkillVersionStatus,
+) {
+  return assertAllowedTransition("SkillVersion", SKILL_VERSION_TRANSITIONS, from, to);
+}
+
+export function validateEvalSetTransition(from: EvalSetStatus, to: EvalSetStatus) {
+  return assertAllowedTransition("EvalSet", EVAL_SET_TRANSITIONS, from, to);
+}

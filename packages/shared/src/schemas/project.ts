@@ -1,8 +1,6 @@
 import { z } from "zod";
 
-import { PROJECT_STATUS_VALUES } from "../enums";
-
-export const projectStatusSchema = z.enum(PROJECT_STATUS_VALUES);
+import { entityIdSchema, projectStatusSchema } from "../enums";
 
 export const projectBriefSchema = z.object({
   sourceRequest: z.string().min(1),
@@ -26,7 +24,7 @@ export const createProjectInputSchema = z.object({
 export const updateProjectInputSchema = createProjectInputSchema.partial();
 
 export const projectRecordSchema = z.object({
-  id: z.string().uuid(),
+  id: entityIdSchema,
   name: z.string(),
   slug: z.string(),
   status: projectStatusSchema,

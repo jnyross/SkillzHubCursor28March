@@ -1,16 +1,11 @@
 import { z } from "zod";
 
 import {
-  iterationStatuses,
-  pairStatuses,
-  runConfigs,
-  runStatuses,
+  comparablePairStatusSchema,
+  iterationStatusSchema,
+  runConfigSchema,
+  runStatusSchema,
 } from "../enums";
-
-export const runConfigSchema = z.enum(runConfigs);
-export const runStatusSchema = z.enum(runStatuses);
-export const pairStatusSchema = z.enum(pairStatuses);
-export const iterationStatusSchema = z.enum(iterationStatuses);
 
 export const modelConfigSchema = z.object({
   modelId: z.string().min(1),
@@ -61,7 +56,7 @@ export const comparablePairSchema = z.object({
   primaryRunId: z.string().uuid(),
   baselineRunId: z.string().uuid(),
   templateHash: z.string().min(1),
-  status: pairStatusSchema,
+  status: comparablePairStatusSchema,
   candidateAssignment: z
     .object({
       candidateA: z.enum(["primary", "baseline"]),

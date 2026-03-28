@@ -7,10 +7,13 @@ export const gradeExpectationSchema = z.object({
 });
 
 export const gradeSchema = z.object({
+  id: z.string().uuid().optional(),
   runId: z.string().uuid(),
   graderVersion: z.string().min(1),
-  expectations: z.array(gradeExpectationSchema),
-  completedAt: z.string().datetime().optional(),
+  grading: z.object({
+    expectations: z.array(gradeExpectationSchema),
+  }),
+  completedAt: z.string().datetime().nullable().default(null),
 });
 
 export type GradeExpectation = z.infer<typeof gradeExpectationSchema>;

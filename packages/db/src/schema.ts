@@ -110,8 +110,9 @@ export const skillVersions = pgTable(
     baseVersionId: text("base_version_id"),
     frontmatterName: text("frontmatter_name").notNull(),
     frontmatterDescription: text("frontmatter_description").notNull(),
-    bundleHash: text("bundle_hash").notNull(),
+    bundleHash: text("bundle_hash"),
     createdBy: text("created_by").notNull(),
+    acceptedAt: timestamp("accepted_at", { withTimezone: true }),
     ...timestamps,
   },
   (table) => ({
@@ -154,7 +155,8 @@ export const evalSets = pgTable(
       .references(() => projects.id, { onDelete: "restrict" }),
     name: text("name").notNull(),
     status: evalSetStatusEnum("status").notNull().default("draft"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    frozenAt: timestamp("frozen_at", { withTimezone: true }),
+    ...timestamps,
   },
   (table) => ({
     evalSetsProjectNameKey: unique("eval_sets_project_name_key").on(table.projectId, table.name),
@@ -380,3 +382,22 @@ export const auditEvents = pgTable("audit_events", {
   payloadJson: jsonb("payload_json").$type<Record<string, unknown>>().notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+export const schema = {
+  projects,
+  skills,
+  skillVersions,
+  skillFiles,
+  evalSets,
+  evalCases,
+  assertions,
+  iterations,
+  iterationEvalSnapshots,
+  runs,
+  grades,
+  comparablePairs,
+  benchmarks,
+  auditEvents,
+};
+
+export type DatabaseSchema = typeof schema;

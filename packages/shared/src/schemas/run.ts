@@ -1,17 +1,19 @@
 import { z } from "zod";
 
-import { runConfigSchema, runStatusSchema, skillModeSchema } from "../enums";
+import { providerIdSchema, runConfigSchema, runStatusSchema } from "../enums";
+
+const timestampSchema = z.string().datetime();
 
 export const runMetricsSchema = z.object({
-  totalTokens: z.number().int().nonnegative().nullable(),
-  durationMs: z.number().int().nonnegative().nullable(),
-  totalCostUsd: z.number().nonnegative().nullable(),
+  totalTokens: z.number().int().nonnegative().nullable().default(null),
+  durationMs: z.number().int().nonnegative().nullable().default(null),
+  totalCostUsd: z.number().nonnegative().nullable().default(null),
 });
 
 export const runArtifactPointerSchema = z.object({
-  artifactStorageUri: z.string().min(1).nullable(),
-  transcriptUri: z.string().min(1).nullable(),
-  manifestHash: z.string().length(64).nullable(),
+  artifactStorageUri: z.string().min(1).nullable().default(null),
+  transcriptUri: z.string().min(1).nullable().default(null),
+  manifestHash: z.string().length(64).nullable().default(null),
 });
 
 export const runRecordSchema = z.object({
@@ -20,15 +22,15 @@ export const runRecordSchema = z.object({
   evalSnapshotId: z.string().uuid(),
   config: runConfigSchema,
   status: runStatusSchema,
-  provider: z.string().min(1).default("claude-code"),
+  provider: providerIdSchema.default("claude-code"),
   modelId: z.string().min(1),
-  templateHash: z.string().length(64),
-  skillMode: skillModeSchema,
-  skillBundleHash: z.string().length(64).nullable(),
-  failureReason: z.string().nullable(),
-  startedAt: z.coerce.date().nullable(),
-  completedAt: z.coerce.date().nullable(),
-  createdAt: z.coerce.date(),
+  templateHash: z.string().min(1),
+  skillMode: runConfigSchema,
+  skillBundleHash: z.string().length(64).nullable().default(null),
+  failureReason: z.string().nullable().default(null),
+  startedAt: timestampSchema.nullable().default(null),
+  completedAt: timestampSchema.nullable().default(null),
+  createdAt: timestampSchema,
   ...runMetricsSchema.shape,
   ...runArtifactPointerSchema.shape,
 });

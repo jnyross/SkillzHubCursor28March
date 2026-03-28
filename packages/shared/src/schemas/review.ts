@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { comparablePairStatusSchema } from "../enums";
+import { comparablePairStatusSchema, entityIdSchema } from "../enums";
 
 export const blindReviewCandidateLabelSchema = z.enum(["candidate_a", "candidate_b"]);
 
@@ -10,7 +10,7 @@ export const blindReviewAssignmentSchema = z.object({
 });
 
 export const reviewDecisionSchema = z.object({
-  pairId: z.string().uuid(),
+  pairId: entityIdSchema,
   status: comparablePairStatusSchema,
   assignment: blindReviewAssignmentSchema,
   notes: z.string().trim().max(10_000),

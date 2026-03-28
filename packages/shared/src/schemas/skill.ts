@@ -3,7 +3,7 @@ import { z } from "zod";
 import {
   skillFileKindSchema,
   skillVersionStatusSchema,
-  skillVersionTransition,
+  skillVersionStatuses,
 } from "../enums";
 
 const timestampSchema = z.string().datetime();
@@ -69,5 +69,12 @@ export const upsertSkillFileSchema = z.object({
 
 export const transitionSkillVersionSchema = z.object({
   from: skillVersionStatusSchema,
-  to: skillVersionTransition,
+  to: z.enum(skillVersionStatuses),
 });
+
+export type SkillFile = z.infer<typeof skillFileSchema>;
+export type SkillVersion = z.infer<typeof skillVersionSchema>;
+export type Skill = z.infer<typeof skillSchema>;
+export type CreateSkillInput = z.infer<typeof createSkillSchema>;
+export type CreateSkillVersionInput = z.infer<typeof createSkillVersionSchema>;
+export type UpsertSkillFileInput = z.infer<typeof upsertSkillFileSchema>;

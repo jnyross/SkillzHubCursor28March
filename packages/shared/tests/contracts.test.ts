@@ -1,49 +1,57 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  BenchmarkSchema,
-  ComparablePairStatusEnum,
+  benchmarkSchema,
+  comparablePairStatuses,
   createTransitionValidator,
-  EvalSetStatusEnum,
-  GradeSchema,
-  IterationSchema,
-  IterationStatusEnum,
-  ProjectSchema,
-  ReviewSubmissionSchema,
-  RunSchema,
-  RunStatusEnum,
-  SkillVersionStatusEnum,
+  evalSetStatuses,
+  gradeSchema,
+  InvalidTransitionError,
+  iterationSchema,
+  iterationStatuses,
+  projectRecordSchema,
+  reviewDecisionSchema,
+  runRecordSchema,
+  runStatuses,
+  skillVersionStatuses,
 } from "../src/index";
 
 describe("shared contracts", () => {
   it("parses representative phase 1 payloads", () => {
-    expect(ProjectSchema.parse({
-      id: "proj_123",
+    expect(projectRecordSchema.parse({
+      id: "7f2f230c-96cf-44ef-9c11-85aa0aef7a1b",
       name: "Skill Builder",
       slug: "skill-builder",
       status: "draft",
-      briefJson: { problem: "Automate skill iteration" },
+      briefJson: {
+        sourceRequest: "Create a skill builder",
+        problemStatement: "Automate skill iteration",
+        targetUser: "internal users",
+        outputExpectations: ["paired eval results"],
+      },
       briefApprovedAt: null,
       ownerUserId: "local-admin",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }).slug).toBe("skill-builder");
 
-    expect(IterationSchema.parse({
-      id: "iter_123",
-      projectId: "proj_123",
+    expect(iterationSchema.parse({
+      id: "ecec15a7-c4e4-4fbe-9a3d-7ee43f3d8b8a",
+      projectId: "7f2f230c-96cf-44ef-9c11-85aa0aef7a1b",
       number: 1,
-      skillVersionId: "skill_v1",
+      skillVersionId: "8d0cabdb-1c85-438c-af06-c9dd0019a6c9",
       baselineSkillVersionId: null,
-      evalSetId: "eval_123",
+      evalSetId: "a96a6f77-9d15-4b54-a6fd-59378b53b059",
       templateHash: "abc123",
-      modelConfig: { model: "claude-sonnet-4-5" },
-      toolConfig: { allowedTools: ["Read", "Edit"] },
-      candidateAssignment: {
-        primaryRunId: "run_primary",
-        baselineRunId: "run_baseline",
-        candidateA: "baseline",
-        candidateB: "primary",
+      modelConfig: {
+        modelId: "claude-sonnet-4-5",
+        maxTurns: 8,
+        maxBudgetUsd: 5,
+        timeoutMs: 300_000,
+      },
+      toolConfig: {
+        permissionMode: "auto",
+        allowedTools: ["Read", "Edit"],
       },
       status: "queued",
       totalPairs: 1,
@@ -56,15 +64,15 @@ describe("shared contracts", () => {
       updatedAt: new Date().toISOString(),
     }).status).toBe("queued");
 
-    expect(RunSchema.parse({
-      id: "run_123",
-      iterationId: "iter_123",
-      evalSnapshotId: "snap_123",
+    expect(runRecordSchema.parse({
+      id: "cf4f8129-d4f6-4747-8d32-bf1015218d30",
+      iterationId: "ecec15a7-c4e4-4fbe-9a3d-7ee43f3d8b8a",
+      evalSnapshotId: "40be6a74-e2d4-466c-bb09-65b1bb007e56",
       config: "with_skill",
       status: "queued",
       provider: "claude-code",
       modelId: "claude-sonnet-4-5",
-      templateHash: "abc123",
+      templateHash: "a".repeat(64),
       skillMode: "with_skill",
       skillBundleHash: null,
       totalTokens: null,
@@ -79,8 +87,8 @@ describe("shared contracts", () => {
       createdAt: new Date().toISOString(),
     }).provider).toBe("claude-code");
 
-    expect(GradeSchema.parse({
-      runId: "run_123",
+    expect(gradeSchema.parse({
+      runId: "cf4f8129-d4f6-4747-8d32-bf1015218d30",
       graderVersion: "phase1",
       grading: {
         expectations: [
@@ -94,52 +102,56 @@ describe("shared contracts", () => {
       completedAt: new Date().toISOString(),
     }).grading.expectations).toHaveLength(1);
 
-    expect(BenchmarkSchema.parse({
-      iterationId: "iter_123",
-      benchmarkHash: "hash_123",
+    expect(benchmarkSchema.parse({
+      iterationId: "ecec15a7-c4e4-4fbe-9a3d-7ee43f3d8b8a",
+      benchmarkHash: "benchmark-hash-123",
+      generatedAt: new Date().toISOString(),
       comparablePairCount: 1,
       excludedPairCount: 0,
-      configMetrics: {
-        primary: {
+      configs: [
+        {
+          config: "with_skill",
           passRate: 1,
-          meanPassCount: 1,
-          meanDurationMs: 2500,
-          meanTokens: 1234,
-          meanCostUsd: 0.02,
+          meanPassCount: { mean: 1, stddev: 0 },
+          durationMs: { mean: 2500, stddev: 0 },
+          totalTokens: { mean: 1234, stddev: 0 },
+          totalCostUsd: { mean: 0.02, stddev: 0 },
         },
-        baseline: {
+        {
+          config: "without_skill",
           passRate: 0,
-          meanPassCount: 0,
-          meanDurationMs: 2200,
-          meanTokens: 1000,
-          meanCostUsd: 0.018,
+          meanPassCount: { mean: 0, stddev: 0 },
+          durationMs: { mean: 2200, stddev: 0 },
+          totalTokens: { mean: 1000, stddev: 0 },
+          totalCostUsd: { mean: 0.018, stddev: 0 },
         },
+      ],
+      deltaAgainstBaseline: {
+        passRateDelta: 1,
+        durationMsDelta: 300,
+        tokenDelta: 234,
+        costDeltaUsd: 0.002,
       },
-      deltas: {
-        passRate: 1,
-        meanPassCount: 1,
-        meanDurationMs: 300,
-        meanTokens: 234,
-        meanCostUsd: 0.002,
-      },
-      createdAt: new Date().toISOString(),
-    }).configMetrics.primary.passRate).toBe(1);
+    }).configs[0]?.passRate).toBe(1);
 
-    expect(ReviewSubmissionSchema.parse({
-      iterationId: "iter_123",
-      benchmarkHash: "hash_123",
+    expect(reviewDecisionSchema.parse({
+      pairId: "cabda8d1-5ba2-410d-a645-918758af4d7c",
+      status: "graded",
+      assignment: {
+        primary: "candidate_a",
+        baseline: "candidate_b",
+      },
       notes: "Candidate A was more complete.",
-      revealRequested: false,
-      completedAt: new Date().toISOString(),
-    }).revealRequested).toBe(false);
+      revealedAt: null,
+    }).assignment.primary).toBe("candidate_a");
   });
 
   it("exposes the constrained status enums", () => {
-    expect(SkillVersionStatusEnum.options).toContain("accepted");
-    expect(EvalSetStatusEnum.options).toContain("frozen");
-    expect(IterationStatusEnum.options).toContain("reviewing");
-    expect(RunStatusEnum.options).toContain("failed");
-    expect(ComparablePairStatusEnum.options).toContain("graded");
+    expect(skillVersionStatuses).toContain("accepted");
+    expect(evalSetStatuses).toContain("frozen");
+    expect(iterationStatuses).toContain("reviewing");
+    expect(runStatuses).toContain("failed");
+    expect(comparablePairStatuses).toContain("graded");
   });
 
   it("validates legal transitions and rejects illegal ones", () => {
@@ -156,8 +168,6 @@ describe("shared contracts", () => {
       to: "frozen",
     });
 
-    expect(() => validateSkillTransition("draft", "accepted")).toThrow(
-      "Invalid SkillVersion transition",
-    );
+    expect(() => validateSkillTransition("draft", "accepted")).toThrow(InvalidTransitionError);
   });
 });
