@@ -5,7 +5,29 @@ export default async function ProjectsPage() {
   const projects = await listProjects(db);
   return (
     <main style={{ display: "grid", gap: "1rem" }}>
-      <h1 style={{ margin: 0, fontSize: "2rem" }}>Projects</h1>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: "1rem",
+          flexWrap: "wrap",
+        }}
+      >
+        <h1 style={{ margin: 0, fontSize: "2rem" }}>Projects</h1>
+        <Link
+          href="/projects/new"
+          style={{
+            borderRadius: "999px",
+            background: "#2563eb",
+            color: "#eff6ff",
+            padding: "0.75rem 1rem",
+            fontWeight: 600,
+          }}
+        >
+          New project
+        </Link>
+      </div>
       <p style={{ margin: 0, color: "#94a3b8", lineHeight: 1.7 }}>
         Authenticated dashboard shell with local project APIs wired to the host
         Postgres database.
@@ -38,6 +60,32 @@ export default async function ProjectsPage() {
                 <strong>{project.name}</strong>
                 <span style={{ color: "#94a3b8" }}>/{project.slug}</span>
                 <span style={{ color: "#cbd5e1" }}>Status: {project.status}</span>
+                <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+                  <Link
+                    href={`/projects/${project.id}`}
+                    style={{ color: "#93c5fd", fontWeight: 500 }}
+                  >
+                    Overview
+                  </Link>
+                  <Link
+                    href={`/projects/${project.id}/discovery`}
+                    style={{ color: "#93c5fd", fontWeight: 500 }}
+                  >
+                    Discovery
+                  </Link>
+                  <Link
+                    href={`/projects/${project.id}/skill`}
+                    style={{ color: "#93c5fd", fontWeight: 500 }}
+                  >
+                    Skill
+                  </Link>
+                  <Link
+                    href={`/projects/${project.id}/evals`}
+                    style={{ color: "#93c5fd", fontWeight: 500 }}
+                  >
+                    Evals
+                  </Link>
+                </div>
               </article>
             ))}
           </div>

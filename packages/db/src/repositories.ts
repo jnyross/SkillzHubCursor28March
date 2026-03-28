@@ -311,3 +311,29 @@ export async function ensureProjectExists(
 
   return project;
 }
+
+export async function createOrUpdateProjectFromForm(
+  db: Database,
+  input: CreateProjectInput & { projectId?: string },
+): Promise<ProjectRecord> {
+  if (input.projectId) {
+    return updateProject(db, input.projectId, {
+      name: input.name,
+      slug: input.slug,
+      briefJson: input.briefJson ?? null,
+    });
+  }
+
+  return createProject(db, input);
+}
+
+export async function getProjectsByOwner(
+  db: Database,
+  ownerUserId: string,
+): Promise<ProjectRecord[]> {
+  return db
+    .select()
+    .from(projects)
+    .where(eq(projects.ownerUserId, ownerUserId))
+    .orderBy(desc(projects.createdAt));
+}
