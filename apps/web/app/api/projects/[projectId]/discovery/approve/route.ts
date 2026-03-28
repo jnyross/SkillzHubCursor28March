@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { approveProjectBrief, db } from "@skill-builder/db";
 
-import { jsonError, parseJsonBody, unwrapParsedBody } from "../../../../../../lib/api";
+import { jsonError } from "../../../../../../lib/api";
 import { requireAuthenticatedSession } from "../../../../../../lib/auth";
 
 type RouteContext = {
@@ -19,14 +19,15 @@ export async function POST(request: Request, context: RouteContext) {
   }
 
   const { projectId } = await context.params;
-  const parsed = await parseJsonBody(
-    request,
-    z.object({
+  const body = await request.json().catch(() => ({})) as { briefApprovedAt?: string };
+  const parsed = z
+    .object({
       briefApprovedAt: z.string().datetime().optional(),
-    }),
-  );
-  if (!unwrapParsedBody(parsed)) {
-    return parsed.response;
+    })
+    .safeParse(body);
+
+  if (!parsed.success) {
+    return jsonError("INVALID_PAYLOAD", "The request payload is invalid.", 400, parsed.error.flatten());
   }
 
   try {

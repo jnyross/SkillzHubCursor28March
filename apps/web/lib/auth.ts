@@ -30,11 +30,11 @@ function sha256(value: string) {
 }
 
 export function getExpectedLocalUser() {
-  return sharedEnv.APP_LOCAL_USER ?? DEFAULT_USER;
+  return process.env.APP_LOCAL_USER ?? sharedEnv.APP_LOCAL_USER ?? DEFAULT_USER;
 }
 
 function getConfiguredPasswordHash() {
-  const rawPassword = sharedEnv.APP_LOCAL_PASSWORD?.trim();
+  const rawPassword = process.env.APP_LOCAL_PASSWORD?.trim() ?? sharedEnv.APP_LOCAL_PASSWORD?.trim();
   if (!rawPassword) {
     return null;
   }
@@ -66,7 +66,7 @@ export async function verifyPassword(password: string) {
 export const verifyLocalPassword = verifyPassword;
 
 function getSessionSecret() {
-  return sharedEnv.APP_SESSION_SECRET ?? "development-session-secret";
+  return process.env.APP_SESSION_SECRET ?? sharedEnv.APP_SESSION_SECRET ?? "development-session-secret";
 }
 
 export function getSessionCookieMaxAgeSeconds() {

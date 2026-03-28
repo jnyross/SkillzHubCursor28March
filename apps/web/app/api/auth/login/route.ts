@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     return parsed.response;
   }
 
-  const input = parsed.data;
+  const input = parsed.data as z.infer<typeof loginInputSchema>;
 
   if (!(await verifyPassword(input.password))) {
     return unauthorized("INVALID_CREDENTIALS");

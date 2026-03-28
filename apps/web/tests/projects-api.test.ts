@@ -7,6 +7,7 @@ const listProjects = vi.fn();
 const updateProject = vi.fn();
 const approveProjectBrief = vi.fn();
 const getSessionFromCookies = vi.fn();
+const getCurrentSession = vi.fn();
 const requireAuthenticatedRequest = vi.fn();
 const requireAuthenticatedSession = vi.fn();
 
@@ -27,7 +28,7 @@ vi.mock("../lib/auth", () => ({
 
 vi.mock("../lib/session", () => ({
   getSessionFromCookies: (...args: unknown[]) => getSessionFromCookies(...args),
-  getCurrentSession: (...args: unknown[]) => getSessionFromCookies(...args),
+  getCurrentSession: (...args: unknown[]) => getCurrentSession(...args),
 }));
 
 describe("project api routes", () => {
@@ -39,10 +40,14 @@ describe("project api routes", () => {
     updateProject.mockReset();
     approveProjectBrief.mockReset();
     getSessionFromCookies.mockReset();
+    getCurrentSession.mockReset();
     requireAuthenticatedRequest.mockReset();
     requireAuthenticatedSession.mockReset();
 
     getSessionFromCookies.mockResolvedValue({
+      user: "local-admin",
+    });
+    getCurrentSession.mockResolvedValue({
       user: "local-admin",
     });
     requireAuthenticatedRequest.mockResolvedValue({
@@ -137,7 +142,7 @@ describe("project api routes", () => {
         },
       ],
     });
-    expect(requireAuthenticatedRequest).toHaveBeenCalled();
+    expect(getSessionFromCookies).toHaveBeenCalled();
   });
 
   it("updates project discovery details", async () => {
@@ -187,7 +192,15 @@ describe("project api routes", () => {
         id: "proj_123",
       },
     });
-    expect(updateProject).toHaveBeenCalled();
+    expect(updateProject).toHaveBeenCalledWith(
+      {},
+      "proj_123",
+      expect.objectContaining({
+        briefJson: expect.objectContaining({
+          targetUser: "internal users",
+        }),
+      }),
+    );
   });
 
   it("approves a project brief", async () => {
@@ -229,6 +242,6 @@ describe("project api routes", () => {
         briefApprovedAt: approvedAt,
       },
     });
-    expect(approveProjectBrief).toHaveBeenCalledWith({}, "proj_123", undefined);
+    expect(approveProjectBrief).toHaveBeenCalledWith({}, "proj_123");
   });
 });

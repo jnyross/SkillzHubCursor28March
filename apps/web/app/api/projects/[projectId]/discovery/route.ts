@@ -11,6 +11,7 @@ import {
   unwrapParsedBody,
 } from "../../../../../lib/api";
 import { getCurrentSession } from "../../../../../lib/session";
+import type { ProjectBrief } from "@skill-builder/shared";
 
 interface DiscoveryRouteContext {
   params: Promise<{
@@ -28,6 +29,7 @@ export async function PATCH(request: Request, context: DiscoveryRouteContext) {
   if (!unwrapParsedBody(briefResult)) {
     return briefResult.response;
   }
+  const brief = briefResult.data as ProjectBrief;
 
   const { projectId } = await context.params;
   const project = await getProjectById(db, projectId);
@@ -38,7 +40,7 @@ export async function PATCH(request: Request, context: DiscoveryRouteContext) {
 
   try {
     const updated = await updateProject(db, projectId, {
-      briefJson: briefResult.data,
+      briefJson: brief as unknown as Record<string, unknown>,
       briefApprovedAt: null,
     });
 

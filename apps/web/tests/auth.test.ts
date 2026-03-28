@@ -6,11 +6,7 @@ vi.mock("../lib/session", () => ({
   getCurrentSession: (...args: unknown[]) => getCurrentSession(...args),
 }));
 
-import {
-  createSessionCookie,
-  verifyPassword,
-  verifySessionCookieValue,
-} from "../lib/auth";
+import { createSessionCookie, verifyPassword, verifySessionCookieValue } from "../lib/auth";
 import { GET as getSession } from "../app/api/auth/session/route";
 
 describe("auth helpers", () => {
@@ -22,8 +18,8 @@ describe("auth helpers", () => {
   it("accepts the configured local password", async () => {
     process.env.APP_LOCAL_PASSWORD = "secret-pass";
 
-    await expect(verifyPassword("secret-pass")).resolves.toBe(true);
-    await expect(verifyPassword("wrong-pass")).resolves.toBe(false);
+    expect(await verifyPassword("secret-pass")).toBe(true);
+    expect(await verifyPassword("wrong-pass")).toBe(false);
   });
 
   it("creates a signed session cookie payload", async () => {

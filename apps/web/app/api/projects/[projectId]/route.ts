@@ -2,7 +2,13 @@ import { NextResponse } from "next/server";
 import { db, getProjectById, updateProject } from "@skill-builder/db";
 import { projectRecordSchema, updateProjectInputSchema } from "@skill-builder/shared";
 
-import { badRequest, notFound, parseJsonBody, unauthorized } from "../../../../lib/api";
+import {
+  badRequest,
+  notFound,
+  parseJsonBody,
+  unauthorized,
+  unwrapParsedBody,
+} from "../../../../lib/api";
 import { getCurrentSession } from "../../../../lib/session";
 
 type RouteContext = {
@@ -37,7 +43,7 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
 
   const parsed = await parseJsonBody(request, updateProjectInputSchema);
-  if (!parsed.success) {
+  if (!unwrapParsedBody(parsed)) {
     return parsed.response;
   }
 
