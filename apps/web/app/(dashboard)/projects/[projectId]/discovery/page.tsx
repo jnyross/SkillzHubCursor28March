@@ -51,13 +51,6 @@ export default function DiscoveryPage({
     notice: null,
   });
 
-  useEffect(() => {
-    params.then(({ projectId: resolved }) => {
-      setProjectId(resolved);
-      void loadProject(resolved);
-    });
-  }, [params]);
-
   async function loadProject(id: string) {
     setStatus((current) => ({ ...current, loading: true, error: null, notice: null }));
 
@@ -82,6 +75,13 @@ export default function DiscoveryPage({
     setBrief(payload.project.briefJson ?? defaultBrief);
     setStatus((current) => ({ ...current, loading: false, error: null }));
   }
+
+  useEffect(() => {
+    params.then(({ projectId: resolved }) => {
+      setProjectId(resolved);
+      void loadProject(resolved);
+    });
+  }, [params]);
 
   function updateListField(
     field: "outputExpectations" | "assumptions" | "openQuestions",
